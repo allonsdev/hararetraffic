@@ -43,3 +43,40 @@ class LogSiteVisitMiddleware(MiddlewareMixin):
 
         threading.Thread(target=save_log).start()
         return None
+    
+
+class SiteVisitMiddleware:
+    EXCLUDED_PREFIXES = ('/static/', '/favicon', '/admin/jsi18n/')
+ 
+    def __init__(self, get_response):
+        self.get_response = get_response
+ 
+    def __call__(self, request):
+        response = self.get_response(request)
+ 
+        # Skip static files and noise
+        path = request.path
+        if any(path.startswith(p) for p in self.EXCLUDED_PREFIXES):
+            return response
+ 
+        try:
+            from .models import SiteVisitLog
+            SiteVisitLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                path=path,
+                full_path=request.get_full_path(),
+                method=request.method,
+                ip_address=self._get_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', '')[:500],
+                referrer=request.META.get('HTTP_REFERER', '')[:500],
+            )
+        except Exception:
+            pass  # Never let logging break the request cycle
+ 
+        return response
+ 
+    def _get_ip(self, request):
+        x_forwarded = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded:
+            return x_forwarded.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR')

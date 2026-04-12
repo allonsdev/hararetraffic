@@ -1,0 +1,245 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alerts | Smart Transport</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+:root{--gold:#ffd60a;--gold-dim:rgba(255,214,10,.1);--navy:#060c18;--card:rgba(255,255,255,.04);--card-border:rgba(255,255,255,.08);--cyan:#00e5ff;--green:#00e096;--red:#ff4d6d;--white:#e8eeff;--text-dim:rgba(232,238,255,.45);--sidebar-w:260px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Syne',sans-serif;background:var(--navy);color:var(--white);display:flex}
+#particles-bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);background:rgba(6,12,24,.97);border-right:1px solid var(--card-border);z-index:100;display:flex;flex-direction:column;backdrop-filter:blur(20px)}
+.sidebar-logo{padding:28px 24px 20px;border-bottom:1px solid var(--card-border)}
+.logo-badge{display:flex;align-items:center;gap:12px}
+.logo-icon{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--gold),#f0a500);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.logo-text{font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:900;letter-spacing:1.5px;line-height:1.3}
+.logo-text span{color:var(--gold)}
+.nav-section-label{font-size:.6rem;letter-spacing:2px;color:var(--text-dim);text-transform:uppercase;padding:20px 24px 8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:12px 24px;color:var(--text-dim);font-size:.85rem;font-weight:600;transition:all .25s;text-decoration:none;border-left:3px solid transparent}
+.nav-item:hover{color:var(--white);background:rgba(255,214,10,.06)}
+.nav-item.active{color:var(--gold);background:var(--gold-dim);border-left-color:var(--gold)}
+.nav-item i{font-size:1.1rem;width:20px}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.65rem;padding:2px 7px;border-radius:99px}
+.sidebar-footer{margin-top:auto;padding:20px 24px;border-top:1px solid var(--card-border);display:flex;align-items:center;gap:12px}
+.user-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#4361ee,#7b2d8b);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;flex-shrink:0}
+.user-info .name{font-size:.82rem;font-weight:700}
+.user-info .role{font-size:.7rem;color:var(--text-dim)}
+.logout-btn{margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem}
+.logout-btn:hover{color:var(--red)}
+
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;overflow-y:auto;padding:30px;position:relative;z-index:1}
+.main::-webkit-scrollbar{width:4px}
+.main::-webkit-scrollbar-thumb{background:rgba(255,214,10,.3);border-radius:4px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.page-title{font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;letter-spacing:1px}
+.page-sub{font-size:.78rem;color:var(--text-dim);margin-top:4px}
+
+.btn-primary{background:linear-gradient(135deg,var(--gold),#f0a500);color:#000;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;padding:10px 20px;border-radius:9px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,214,10,.35)}
+
+.panel{background:var(--card);border:1px solid var(--card-border);border-radius:16px;overflow:hidden;margin-bottom:24px}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--card-border)}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.panel-body{padding:20px}
+
+/* ALERT CARDS */
+.alerts-feed{display:flex;flex-direction:column;gap:12px}
+
+.alert-card{
+  display:flex;align-items:flex-start;gap:16px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--card-border);
+  border-radius:12px;padding:16px 18px;
+  transition:all .2s;position:relative;overflow:hidden;
+}
+.alert-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.alert-card.traffic::before{background:var(--red)}
+.alert-card.vehicle::before{background:var(--gold)}
+.alert-card.system::before{background:var(--cyan)}
+.alert-card:hover{border-color:rgba(255,255,255,.12);transform:translateX(4px)}
+.alert-card.inactive{opacity:.5}
+
+.alert-icon-wrap{
+  width:42px;height:42px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;
+}
+.traffic .alert-icon-wrap{background:rgba(255,77,109,.1);color:var(--red)}
+.vehicle .alert-icon-wrap{background:rgba(255,214,10,.1);color:var(--gold)}
+.system .alert-icon-wrap{background:rgba(0,229,255,.08);color:var(--cyan)}
+
+.alert-body{flex:1}
+.alert-msg{font-size:.88rem;color:var(--white);line-height:1.5;margin-bottom:6px}
+.alert-meta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.alert-type-badge{font-size:.65rem;padding:2px 9px;border-radius:99px;font-weight:700;letter-spacing:.5px}
+.alert-type-badge.traffic{background:rgba(255,77,109,.12);color:var(--red)}
+.alert-type-badge.vehicle{background:rgba(255,214,10,.1);color:var(--gold)}
+.alert-type-badge.system{background:rgba(0,229,255,.08);color:var(--cyan)}
+.alert-time{font-size:.7rem;color:var(--text-dim)}
+
+.alert-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.resolve-btn{font-size:.75rem;padding:6px 14px;border-radius:7px;background:rgba(0,224,150,.08);border:1px solid rgba(0,224,150,.2);color:var(--green);cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;transition:all .2s}
+.resolve-btn:hover{background:rgba(0,224,150,.15)}
+
+/* CREATE ALERT FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-group label{font-size:.7rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim)}
+.form-group input,.form-group select,.form-group textarea{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:12px 14px;color:var(--white);font-family:'Syne',sans-serif;font-size:.88rem;outline:none;transition:border .3s,box-shadow .3s;resize:vertical}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,214,10,.1)}
+.form-group select option{background:#0d1628}
+.form-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:20px;grid-column:1/-1}
+
+.filter-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{padding:8px 18px;border-radius:99px;background:var(--card);border:1px solid var(--card-border);color:var(--text-dim);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s}
+.tab-btn.active,.tab-btn:hover{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+</style>
+</head>
+<body>
+
+<div id="particles-bg"></div>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-badge">
+      <div class="logo-icon">🚌</div>
+      <div class="logo-text">SMART<br><span>TRANSPORT</span></div>
+    </div>
+  </div>
+  <div class="nav-section-label">Navigation</div>
+  <a href="/" class="nav-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
+  <a href="/fleet/" class="nav-item"><i class="bi bi-truck"></i> Fleet Management</a>
+  <a href="/trips/" class="nav-item"><i class="bi bi-signpost-split"></i> Trips</a>
+  <a href="/routes/" class="nav-item"><i class="bi bi-diagram-3"></i> Routes</a>
+  <div class="nav-section-label">Monitor</div>
+  <a href="/traffic/" class="nav-item"><i class="bi bi-exclamation-triangle"></i> Traffic Events</a>
+  <a href="/alerts/" class="nav-item active"><i class="bi bi-bell"></i> Alerts <span class="nav-badge">{{ alerts|default:"3" }}</span></a>
+  <a href="/metrics/" class="nav-item"><i class="bi bi-bar-chart-line"></i> Performance</a>
+  <div class="nav-section-label">System</div>
+  <a href="/admin-dashboard/" class="nav-item"><i class="bi bi-shield-lock"></i> Admin Dashboard</a>
+  <a href="/logs/" class="nav-item"><i class="bi bi-journal-text"></i> Site Logs</a>
+  <div class="sidebar-footer">
+    <div class="user-avatar">{{ request.user.username|first|upper|default:"A" }}</div>
+    <div class="user-info">
+      <div class="name">{{ request.user.username|default:"Admin" }}</div>
+      <div class="role">Fleet Operator</div>
+    </div>
+    <a href="/logout/" class="logout-btn"><i class="bi bi-box-arrow-right"></i></a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title">System Alerts</div>
+      <div class="page-sub">Monitor and manage all active alerts</div>
+    </div>
+    <button class="btn-primary" onclick="document.getElementById('createPanel').scrollIntoView({behavior:'smooth'})">
+      <i class="bi bi-plus-circle"></i> Create Alert
+    </button>
+  </div>
+
+  <!-- FILTER TABS -->
+  <div class="filter-tabs">
+    <button class="tab-btn active" onclick="filterAlerts(this,'all')">All Alerts</button>
+    <button class="tab-btn" onclick="filterAlerts(this,'traffic')">Traffic</button>
+    <button class="tab-btn" onclick="filterAlerts(this,'vehicle')">Vehicle</button>
+    <button class="tab-btn" onclick="filterAlerts(this,'system')">System</button>
+    <button class="tab-btn" onclick="filterAlerts(this,'inactive')">Resolved</button>
+  </div>
+
+  <!-- ALERTS FEED -->
+  <div class="alerts-feed" id="alertsFeed">
+    {% for alert in all_alerts %}
+    <div class="alert-card {{ alert.alert_type }} {% if not alert.is_active %}inactive{% endif %}"
+         data-type="{{ alert.alert_type }}" data-active="{{ alert.is_active|yesno:'true,false' }}">
+      <div class="alert-icon-wrap">
+        {% if alert.alert_type == 'traffic' %}<i class="bi bi-cone-striped"></i>
+        {% elif alert.alert_type == 'vehicle' %}<i class="bi bi-truck"></i>
+        {% else %}<i class="bi bi-cpu"></i>{% endif %}
+      </div>
+      <div class="alert-body">
+        <div class="alert-msg">{{ alert.message }}</div>
+        <div class="alert-meta">
+          <span class="alert-type-badge {{ alert.alert_type }}">{{ alert.alert_type|upper }}</span>
+          <span class="alert-time">{{ alert.created_at|timesince }} ago</span>
+          {% if not alert.is_active %}
+          <span style="font-size:.68rem;color:var(--green)">✓ Resolved</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if alert.is_active %}
+      <div class="alert-actions">
+        <form method="post" action="/alerts/resolve/{{ alert.id }}/">
+          {% csrf_token %}
+          <button type="submit" class="resolve-btn"><i class="bi bi-check2"></i> Resolve</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <div style="color:var(--text-dim);font-size:.85rem;padding:20px 0;text-align:center">No alerts found.</div>
+    {% endfor %}
+  </div>
+
+  <!-- CREATE ALERT FORM -->
+  <div class="panel" id="createPanel" style="margin-top:32px">
+    <div class="panel-header">
+      <span class="panel-title"><i class="bi bi-plus-circle me-2"></i>Create New Alert</span>
+    </div>
+    <div class="panel-body">
+      <form method="post" action="/alerts/create/">
+        {% csrf_token %}
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Alert Type</label>
+            <select name="alert_type" required>
+              <option value="traffic">Traffic</option>
+              <option value="vehicle">Vehicle</option>
+              <option value="system">System</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select name="is_active">
+              <option value="true">Active</option>
+              <option value="false">Resolved</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Alert Message</label>
+            <textarea name="message" rows="4" placeholder="Describe the alert in detail..." required></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="reset" style="background:var(--card);border:1px solid var(--card-border);color:var(--white);padding:10px 20px;border-radius:9px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:600;">Reset</button>
+            <button type="submit" class="btn-primary"><i class="bi bi-send"></i> Broadcast Alert</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+particlesJS('particles-bg',{particles:{number:{value:40},color:{value:'#ffd60a'},opacity:{value:.12,random:true},size:{value:1.5,random:true},line_linked:{enable:true,distance:150,color:'#ffd60a',opacity:.05,width:1},move:{enable:true,speed:.6,random:true,out_mode:'out'}},retina_detect:true});
+
+function filterAlerts(btn, type) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.alert-card').forEach(card => {
+    if (type === 'all') { card.style.display = ''; return; }
+    if (type === 'inactive') { card.style.display = card.dataset.active === 'false' ? '' : 'none'; return; }
+    card.style.display = card.dataset.type === type ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

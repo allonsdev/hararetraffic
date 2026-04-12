@@ -1,0 +1,471 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login | Smart Transport · Harare City Council</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #ffd60a;
+  --gold-dim: rgba(255,214,10,0.15);
+  --navy: #0a0f1e;
+  --navy2: #0d1b2a;
+  --blue: #1a237e;
+  --cyan: #00e5ff;
+  --white: #f0f4ff;
+  --error: #ff4d6d;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Syne', sans-serif;
+  display: flex;
+}
+
+/* ── LEFT HALF: particles ── */
+.left-panel {
+  position: relative;
+  width: 55%;
+  height: 100vh;
+  background: var(--navy);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#particles-js {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.left-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 40px;
+}
+
+.brand-logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  background: var(--gold-dim);
+  font-size: 2rem;
+  animation: pulse-ring 2.5s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,214,10,0.5); }
+  50% { box-shadow: 0 0 0 20px rgba(255,214,10,0); }
+}
+
+.brand-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 3px;
+  line-height: 1.2;
+}
+
+.brand-title span { color: var(--gold); }
+
+.brand-sub {
+  color: rgba(240,244,255,0.55);
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.stats-row {
+  display: flex;
+  gap: 30px;
+  margin-top: 50px;
+  justify-content: center;
+}
+
+.stat-chip {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,214,10,0.2);
+  border-radius: 12px;
+  padding: 16px 20px;
+  text-align: center;
+  min-width: 90px;
+  backdrop-filter: blur(8px);
+}
+
+.stat-chip .num {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.5rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.stat-chip .lbl {
+  font-size: 0.65rem;
+  color: rgba(240,244,255,0.5);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+.scan-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+  opacity: 0.4;
+  animation: scan 4s linear infinite;
+  z-index: 1;
+}
+
+@keyframes scan {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* ── RIGHT HALF: form ── */
+.right-panel {
+  width: 45%;
+  height: 100vh;
+  background: #0d1117;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.right-panel::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  right: -200px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255,214,10,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.form-box {
+  width: 100%;
+  max-width: 380px;
+  animation: slide-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.form-heading {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.5rem;
+  color: var(--white);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.form-sub {
+  color: rgba(240,244,255,0.4);
+  font-size: 0.82rem;
+  letter-spacing: 1px;
+  margin-bottom: 40px;
+}
+
+.field-wrap {
+  margin-bottom: 22px;
+  position: relative;
+}
+
+.field-wrap label {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(240,244,255,0.5);
+  margin-bottom: 8px;
+}
+
+.field-wrap input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 14px 16px 14px 44px;
+  color: var(--white);
+  font-family: 'Syne', sans-serif;
+  font-size: 0.92rem;
+  transition: border 0.3s, box-shadow 0.3s;
+  outline: none;
+}
+
+.field-wrap input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(255,214,10,0.12);
+}
+
+.field-icon {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  color: rgba(240,244,255,0.3);
+  font-size: 1.1rem;
+  pointer-events: none;
+  transition: color 0.3s;
+}
+
+.field-wrap input:focus + .field-icon,
+.field-wrap:focus-within .field-icon {
+  color: var(--gold);
+}
+
+.options-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  font-size: 0.8rem;
+  color: rgba(240,244,255,0.4);
+}
+
+.options-row a { color: var(--gold); text-decoration: none; }
+.options-row a:hover { text-decoration: underline; }
+
+.checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.checkbox-wrap input[type=checkbox] {
+  accent-color: var(--gold);
+  width: 15px; height: 15px;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--gold), #f0a500);
+  color: #000;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.3s;
+}
+
+.btn-login::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(255,214,10,0.4);
+}
+
+.btn-login:hover::after { opacity: 1; }
+.btn-login:active { transform: translateY(0); }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0;
+  color: rgba(240,244,255,0.2);
+  font-size: 0.75rem;
+}
+
+.divider::before, .divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+}
+
+.footer-note {
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(240,244,255,0.25);
+  margin-top: 30px;
+  letter-spacing: 0.5px;
+}
+
+.footer-note span { color: var(--gold); }
+
+/* Error messages */
+.errorlist {
+  list-style: none;
+  margin: -12px 0 16px;
+  padding: 0;
+}
+.errorlist li {
+  color: var(--error);
+  font-size: 0.78rem;
+  padding: 6px 10px;
+  background: rgba(255,77,109,0.1);
+  border-radius: 6px;
+  border-left: 3px solid var(--error);
+  margin-bottom: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .left-panel { display: none; }
+  .right-panel { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- LEFT: Particles -->
+<div class="left-panel">
+  <div class="scan-line"></div>
+  <div id="particles-js"></div>
+  <div class="left-content">
+    <div class="brand-logo">🚌</div>
+    <div class="brand-title">SMART<br><span>TRANSPORT</span></div>
+    <div class="brand-sub">Harare City Council · Fleet Intelligence</div>
+    <div class="stats-row">
+      <div class="stat-chip">
+        <div class="num">{{ total_vehicles|default:"48" }}</div>
+        <div class="lbl">Vehicles</div>
+      </div>
+      <div class="stat-chip">
+        <div class="num">{{ active_trips|default:"12" }}</div>
+        <div class="lbl">Live Trips</div>
+      </div>
+      <div class="stat-chip">
+        <div class="num">24/7</div>
+        <div class="lbl">Coverage</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT: Form -->
+<div class="right-panel">
+  <div class="form-box">
+    <div class="form-heading">Welcome Back</div>
+    <div class="form-sub">Sign in to access your dashboard</div>
+
+    {% if form.non_field_errors %}
+      <ul class="errorlist">
+        {% for error in form.non_field_errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="post" action="{% url 'login' %}">
+      {% csrf_token %}
+
+      <div class="field-wrap">
+        <label for="id_username">Username</label>
+        <input type="text" id="id_username" name="username" 
+               placeholder="Enter your username"
+               value="{{ form.username.value|default:'' }}" autocomplete="username">
+        <span class="field-icon">👤</span>
+        {% if form.username.errors %}
+          <ul class="errorlist">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+
+      <div class="field-wrap">
+        <label for="id_password">Password</label>
+        <input type="password" id="id_password" name="password"
+               placeholder="Enter your password" autocomplete="current-password">
+        <span class="field-icon">🔒</span>
+        {% if form.password.errors %}
+          <ul class="errorlist">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+        {% endif %}
+      </div>
+
+      <div class="options-row">
+        <label class="checkbox-wrap">
+          <input type="checkbox" name="remember_me"> Remember me
+        </label>
+        <a href="#">Forgot password?</a>
+      </div>
+
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" class="btn-login">SIGN IN →</button>
+    </form>
+
+    <div class="footer-note">
+      Smart Transportation System © 2026<br>
+      Secured by <span>Harare City Council IT</span>
+    </div>
+  </div>
+</div>
+
+<!-- Particles.js -->
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+particlesJS('particles-js', {
+  particles: {
+    number: { value: 90, density: { enable: true, value_area: 900 } },
+    color: { value: ['#ffd60a', '#00e5ff', '#ffffff'] },
+    shape: { type: 'circle' },
+    opacity: { value: 0.55, random: true,
+      anim: { enable: true, speed: 0.8, opacity_min: 0.1, sync: false }
+    },
+    size: { value: 2.5, random: true,
+      anim: { enable: true, speed: 2, size_min: 0.3, sync: false }
+    },
+    line_linked: {
+      enable: true,
+      distance: 130,
+      color: '#ffd60a',
+      opacity: 0.18,
+      width: 1
+    },
+    move: {
+      enable: true, speed: 1.2, direction: 'none', random: true,
+      straight: false, out_mode: 'out', bounce: false
+    }
+  },
+  interactivity: {
+    detect_on: 'canvas',
+    events: {
+      onhover: { enable: true, mode: 'grab' },
+      onclick: { enable: true, mode: 'push' },
+      resize: true
+    },
+    modes: {
+      grab: { distance: 180, line_linked: { opacity: 0.5 } },
+      push: { particles_nb: 4 }
+    }
+  },
+  retina_detect: true
+});
+</script>
+
+</body>
+</html>
