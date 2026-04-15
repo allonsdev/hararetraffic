@@ -1,0 +1,83 @@
+
+{% extends "base.html" %}
+{% block title %}Trips | Smart Transport{% endblock %}
+{% block nav_trips %}active{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div><div class="page-title">Trip Management</div><div class="page-sub">Track and manage all vehicle trips</div></div>
+  <button class="btn btn-dark" onclick="openModal('tripModal')"><i class="fa-solid fa-plus"></i> New Trip</button>
+</div>
+<div class="kpi-grid kpi-grid-3 gap-mb">
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--green-light)"></div><div class="kpi-val" style="color:var(--green-light)">{{ ongoing_count|default:0 }}</div><div class="kpi-label">Ongoing</div><span class="kpi-delta delta-up">Live</span></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:#fff"></div><div class="kpi-val">{{ completed_count|default:0 }}</div><div class="kpi-label">Completed</div></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--red-light)"></div><div class="kpi-val" style="color:var(--red-light)">{{ cancelled_count|default:0 }}</div><div class="kpi-label">Cancelled</div></div>
+</div>
+<div class="section-white">
+  <div class="card-white">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-route"></i> &nbsp;All Trips</span>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-outline-light btn-xs f-btn on" onclick="fTrip(this,'all')">All</button>
+        <button class="btn btn-outline-light btn-xs f-btn" onclick="fTrip(this,'ongoing')">Ongoing</button>
+        <button class="btn btn-outline-light btn-xs f-btn" onclick="fTrip(this,'completed')">Done</button>
+        <button class="btn btn-outline-light btn-xs f-btn" onclick="fTrip(this,'cancelled')">Cancelled</button>
+      </div>
+    </div>
+    <div class="card-body-flush dt-light">
+      <table id="dt-trips" class="data-table" style="color:var(--text-on-light);width:100%">
+        <thead><tr>
+          <th style="color:var(--text-on-light-muted)">#</th>
+          <th style="color:var(--text-on-light-muted)">Vehicle</th>
+          <th style="color:var(--text-on-light-muted)">From</th>
+          <th style="color:var(--text-on-light-muted)">To</th>
+          <th style="color:var(--text-on-light-muted)">Status</th>
+          <th style="color:var(--text-on-light-muted)">Started</th>
+          <th style="color:var(--text-on-light-muted)">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for trip in trips %}
+          <tr data-status="{{ trip.status }}">
+            <td style="color:var(--text-on-light-dim)">{{ forloop.counter }}</td>
+            <td><span style="font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:var(--text-on-light)">{{ trip.vehicle.registration_number }}</span></td>
+            <td style="color:var(--text-on-light)">{{ trip.start_location }}</td>
+            <td style="color:var(--text-on-light)">{{ trip.destination }}</td>
+            <td><span class="badge badge-{% if trip.status == 'ongoing' %}green-light{% elif trip.status == 'completed' %}dark{% else %}red-light{% endif %}">{{ trip.status }}</span></td>
+            <td style="color:var(--text-on-light-dim);font-size:11px">{{ trip.start_time|timesince }} ago</td>
+            <td>
+              {% if trip.status == 'ongoing' %}
+              <div style="display:flex;gap:5px">
+                <form method="post" action="{% url 'trip_complete' trip.id %}">{% csrf_token %}<button type="submit" class="btn btn-success btn-xs"><i class="fa-solid fa-check"></i> Done</button></form>
+                <form method="post" action="{% url 'trip_cancel' trip.id %}" onsubmit="return confirm('Cancel trip?')">{% csrf_token %}<button type="submit" class="btn btn-danger btn-xs"><i class="fa-solid fa-xmark"></i></button></form>
+              </div>
+              {% else %}<span style="font-size:10px;color:var(--text-on-light-muted)">—</span>{% endif %}
+            </td>
+          </tr>
+          {% empty %}<tr><td colspan="7" style="text-align:center;color:var(--text-on-light-dim);padding:24px">No trips yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="tripModal">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeModal('tripModal')"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-title">Create New Trip</div>
+    <form method="post" action="{% url 'trip_create' %}">{% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Vehicle</label><select name="vehicle" class="form-control" required><option value="">— Select vehicle —</option>{% for v in vehicles %}<option value="{{ v.id }}">{{ v.registration_number }} ({{ v.driver_name }})</option>{% endfor %}</select></div>
+        <div class="form-group"><label class="form-label">Start Location</label><input type="text" name="start_location" placeholder="e.g. Kambuzuma" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Destination</label><input type="text" name="destination" placeholder="e.g. CBD Harare" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Start Latitude</label><input type="number" name="start_lat" placeholder="-17.8252" step="any" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Start Longitude</label><input type="number" name="start_lng" placeholder="31.0335" step="any" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Dest Latitude</label><input type="number" name="dest_lat" placeholder="-17.8300" step="any" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Dest Longitude</label><input type="number" name="dest_lng" placeholder="31.0500" step="any" class="form-control"></div>
+        <div class="form-actions"><button type="button" class="btn btn-outline-dark" onclick="closeModal('tripModal')">Cancel</button><button type="submit" class="btn btn-dark"><i class="fa-solid fa-play"></i> Start Trip</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>
+$(document).ready(function(){$('#dt-trips').DataTable(Object.assign({},dtLight,{columnDefs:[{orderable:false,targets:[0,6]}]}))});
+function fTrip(btn,s){document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('#dt-trips tbody tr').forEach(r=>{r.style.display=(s==='all'||r.dataset.status===s)?'':'none'});}
+</script>{% endblock %}

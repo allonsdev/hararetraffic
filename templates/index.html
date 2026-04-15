@@ -1,618 +1,175 @@
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Dashboard | Smart Transport{% endblock %}
+{% block nav_home %}active{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
-
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --b1:#0a1628; --b2:#0d2145; --b3:#1a3a6e; --b4:#2563eb; --b5:#3b82f6; --b6:#93c5fd;
-  --w1:#ffffff; --w2:#f0f7ff; --w3:#dbeafe; --w4:#bfdbfe;
-  --glass-bg:rgba(255,255,255,0.08); --glass-border:rgba(255,255,255,0.18);
-  --glass-bg-dark:rgba(10,22,40,0.55); --glass-border-dark:rgba(59,130,246,0.3);
-}
-body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,var(--b1) 0%,var(--b2) 35%,var(--b3) 65%,var(--b4) 100%);color:#fff;min-height:800px;overflow-x:hidden;position:relative}
-
-/* PARTICLES */
-#pcanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
-
-/* LAYOUT */
-.page{position:relative;z-index:1}
-
-/* NAV */
-nav{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:18px 40px;
-  background:rgba(10,22,40,0.6);
-  border-bottom:1px solid var(--glass-border);
-  backdrop-filter:blur(20px);
-  position:sticky;top:0;z-index:100;
-}
-.nav-brand{display:flex;align-items:center;gap:12px}
-.nav-logo{
-  width:38px;height:38px;border-radius:10px;
-  background:linear-gradient(135deg,#2563eb,#1d4ed8);
-  border:1px solid rgba(147,197,253,0.4);
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;
-}
-.nav-title{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;letter-spacing:2px;color:#fff;line-height:1.2}
-.nav-title span{color:#93c5fd}
-.nav-links{display:flex;gap:28px}
-.nav-links a{
-  font-size:.82rem;font-weight:500;color:rgba(255,255,255,.65);
-  text-decoration:none;letter-spacing:.5px;transition:color .2s;
-}
-.nav-links a:hover{color:#93c5fd}
-.nav-cta{
-  background:linear-gradient(135deg,#2563eb,#1d4ed8);
-  color:#fff;border:none;padding:9px 20px;
-  border-radius:9px;font-size:.8rem;font-weight:600;
-  cursor:pointer;letter-spacing:.5px;border:1px solid rgba(147,197,253,0.3);
-  transition:all .2s;
-}
-.nav-cta:hover{background:linear-gradient(135deg,#3b82f6,#2563eb);transform:translateY(-1px)}
-
-/* HERO */
-.hero{
-  display:grid;grid-template-columns:1fr 1fr;
-  min-height:520px;
-  padding:0;
-  overflow:hidden;
-}
-
-/* LEFT: BLUE SIDE */
-.hero-left{
-  background:linear-gradient(160deg,rgba(37,99,235,.15) 0%,rgba(29,78,216,.08) 100%);
-  padding:70px 50px 60px 40px;
-  display:flex;flex-direction:column;justify-content:center;
-  border-right:1px solid var(--glass-border);
-  position:relative;
-}
-.hero-left::before{
-  content:'';position:absolute;top:-80px;left:-80px;
-  width:300px;height:300px;
-  background:radial-gradient(circle,rgba(59,130,246,.18) 0%,transparent 70%);
-  pointer-events:none;
-}
-.hero-eyebrow{
-  font-size:.68rem;letter-spacing:3px;text-transform:uppercase;
-  color:#93c5fd;font-weight:600;margin-bottom:18px;
-  display:flex;align-items:center;gap:8px;
-}
-.hero-eyebrow::before{content:'';width:24px;height:2px;background:#3b82f6;border-radius:2px}
-.hero-h1{
-  font-family:'Orbitron',monospace;
-  font-size:2.1rem;font-weight:900;line-height:1.15;
-  color:#fff;letter-spacing:1px;margin-bottom:20px;
-}
-.hero-h1 span{color:#93c5fd}
-.hero-desc{
-  font-size:.9rem;line-height:1.7;color:rgba(255,255,255,.68);
-  max-width:400px;margin-bottom:36px;
-}
-.hero-btns{display:flex;gap:14px;flex-wrap:wrap}
-.btn-primary{
-  background:linear-gradient(135deg,#2563eb,#1d4ed8);
-  color:#fff;border:1px solid rgba(147,197,253,.35);
-  padding:13px 28px;border-radius:10px;
-  font-size:.84rem;font-weight:600;cursor:pointer;
-  letter-spacing:.5px;transition:all .25s;
-}
-.btn-primary:hover{background:linear-gradient(135deg,#3b82f6,#2563eb);transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,235,.45)}
-.btn-ghost{
-  background:rgba(255,255,255,.07);
-  color:#fff;border:1px solid rgba(255,255,255,.2);
-  padding:13px 28px;border-radius:10px;
-  font-size:.84rem;font-weight:600;cursor:pointer;
-  letter-spacing:.5px;transition:all .25s;
-  backdrop-filter:blur(10px);
-}
-.btn-ghost:hover{background:rgba(255,255,255,.12);border-color:rgba(147,197,253,.5)}
-
-.hero-tags{display:flex;gap:10px;margin-top:28px;flex-wrap:wrap}
-.hero-tag{
-  font-size:.68rem;padding:4px 12px;border-radius:99px;
-  background:rgba(37,99,235,.25);border:1px solid rgba(147,197,253,.25);
-  color:#93c5fd;font-weight:500;letter-spacing:.5px;
-}
-
-/* RIGHT: WHITE GLASS SIDE */
-.hero-right{
-  background:rgba(255,255,255,0.92);
-  padding:50px 40px 50px 50px;
-  display:flex;flex-direction:column;justify-content:center;
-  position:relative;
-}
-.stats-title{
-  font-family:'Orbitron',monospace;font-size:.72rem;
-  letter-spacing:2px;text-transform:uppercase;
-  color:#1d4ed8;margin-bottom:22px;font-weight:700;
-}
-.kpi-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px}
-.kpi{
-  background:rgba(239,246,255,0.9);
-  border:1px solid rgba(147,197,253,.5);
-  border-radius:14px;padding:18px;
-  position:relative;overflow:hidden;
-  transition:transform .25s;
-}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#2563eb,#3b82f6)}
-.kpi:hover{transform:translateY(-3px)}
-.kpi-icon{font-size:1.3rem;margin-bottom:8px}
-.kpi-val{font-family:'Orbitron',monospace;font-size:1.7rem;font-weight:700;color:#1e3a8a;line-height:1}
-.kpi-lbl{font-size:.67rem;color:#3b82f6;text-transform:uppercase;letter-spacing:1px;margin-top:6px;font-weight:600}
-.kpi-delta{
-  position:absolute;top:14px;right:14px;
-  font-size:.65rem;font-weight:700;padding:2px 7px;
-  border-radius:99px;background:rgba(37,99,235,.1);color:#1d4ed8;
-}
-
-.map-preview{
-  background:linear-gradient(135deg,#eff6ff,#dbeafe);
-  border:1px solid rgba(147,197,253,.5);
-  border-radius:14px;padding:16px;
-  position:relative;overflow:hidden;height:140px;
-  display:flex;align-items:center;justify-content:center;
-}
-.map-grid{
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(37,99,235,.08) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(37,99,235,.08) 1px,transparent 1px);
-  background-size:28px 28px;
-}
-.map-dots{position:absolute;inset:0}
-.dot{position:absolute;border-radius:50%}
-.dot.active{width:10px;height:10px;background:#16a34a;border:2px solid #fff;box-shadow:0 0 0 3px rgba(22,163,74,.25)}
-.dot.idle{width:8px;height:8px;background:#d97706;border:2px solid #fff}
-.dot.offline{width:8px;height:8px;background:#dc2626;border:2px solid #fff}
-.map-label{font-family:'Orbitron',monospace;font-size:.65rem;color:#1d4ed8;font-weight:700;letter-spacing:1px;position:relative;z-index:1}
-.map-legend{display:flex;gap:14px;margin-top:10px;justify-content:center}
-.leg{display:flex;align-items:center;gap:5px;font-size:.65rem;color:#3b82f6;font-weight:600}
-.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-
-/* OBJECTIVES BAND */
-.obj-band{
-  display:grid;grid-template-columns:repeat(5,1fr);
-  gap:1px;
-  background:rgba(37,99,235,.3);
-  border-top:1px solid rgba(147,197,253,.2);
-  border-bottom:1px solid rgba(147,197,253,.2);
-}
-.obj-card{
-  padding:28px 20px;
-  background:rgba(10,22,40,.7);
-  backdrop-filter:blur(12px);
-  text-align:center;
-  transition:background .25s;
-  cursor:default;
-}
-.obj-card:hover{background:rgba(37,99,235,.25)}
-.obj-num{
-  font-family:'Orbitron',monospace;font-size:.7rem;
-  color:#93c5fd;font-weight:700;letter-spacing:2px;margin-bottom:10px;
-}
-.obj-icon{font-size:1.5rem;margin-bottom:10px;display:block}
-.obj-title{font-size:.75rem;font-weight:600;color:#fff;line-height:1.4;letter-spacing:.2px}
-
-/* FEATURES: 50/50 ALTERNATING */
-.feature-section{display:grid;grid-template-columns:1fr 1fr}
-.feat-blue{
-  background:linear-gradient(160deg,rgba(37,99,235,.12),rgba(29,78,216,.06));
-  padding:60px 40px;
-  border-right:1px solid rgba(147,197,253,.15);
-}
-.feat-white{
-  background:rgba(255,255,255,0.88);
-  padding:60px 40px;
-}
-.feat-label{
-  font-size:.65rem;letter-spacing:2.5px;text-transform:uppercase;
-  font-weight:700;margin-bottom:14px;
-}
-.feat-blue .feat-label{color:#93c5fd}
-.feat-white .feat-label{color:#2563eb}
-.feat-h2{font-family:'Orbitron',monospace;font-size:1.2rem;font-weight:700;line-height:1.3;margin-bottom:16px}
-.feat-blue .feat-h2{color:#fff}
-.feat-white .feat-h2{color:#1e3a8a}
-.feat-body{font-size:.84rem;line-height:1.7;margin-bottom:24px}
-.feat-blue .feat-body{color:rgba(255,255,255,.62)}
-.feat-white .feat-body{color:#374151}
-
-.feat-list{list-style:none;display:flex;flex-direction:column;gap:10px}
-.feat-list li{
-  display:flex;align-items:center;gap:10px;
-  font-size:.82rem;
-}
-.feat-blue .feat-list li{color:rgba(255,255,255,.78)}
-.feat-white .feat-list li{color:#1e40af}
-.check{
-  width:20px;height:20px;border-radius:5px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;
-}
-.feat-blue .check{background:rgba(37,99,235,.4);color:#93c5fd}
-.feat-white .check{background:rgba(219,234,254,1);color:#1d4ed8}
-
-/* GLASS CARDS SECTION */
-.glass-section{
-  padding:60px 40px;
-  background:linear-gradient(180deg,rgba(37,99,235,.08),rgba(10,22,40,.4));
-}
-.glass-section-title{
-  font-family:'Orbitron',monospace;font-size:.75rem;
-  letter-spacing:2.5px;text-transform:uppercase;color:#93c5fd;
-  text-align:center;margin-bottom:8px;
-}
-.glass-section-h2{
-  font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:900;
-  text-align:center;color:#fff;margin-bottom:40px;
-}
-.glass-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.glass-card{
-  background:rgba(255,255,255,.08);
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:18px;
-  padding:28px 22px;
-  backdrop-filter:blur(20px);
-  transition:all .25s;
-  position:relative;overflow:hidden;
-}
-.glass-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(147,197,253,.6),transparent);
-}
-.glass-card:hover{
-  background:rgba(255,255,255,.13);
-  border-color:rgba(147,197,253,.4);
-  transform:translateY(-5px);
-}
-.gc-icon{
-  width:46px;height:46px;border-radius:12px;
-  background:rgba(37,99,235,.35);border:1px solid rgba(147,197,253,.3);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.3rem;margin-bottom:16px;
-}
-.gc-title{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:.3px}
-.gc-body{font-size:.78rem;color:rgba(255,255,255,.58);line-height:1.6}
-.gc-ref{
-  font-size:.65rem;color:rgba(147,197,253,.5);margin-top:12px;
-  font-style:italic;
-}
-
-/* FOOTER */
-footer{
-  background:rgba(10,22,40,.95);
-  border-top:1px solid rgba(147,197,253,.15);
-  padding:28px 40px;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.footer-brand{font-family:'Orbitron',monospace;font-size:.72rem;color:rgba(255,255,255,.45);letter-spacing:1.5px}
-.footer-brand span{color:#3b82f6}
-.footer-right{font-size:.72rem;color:rgba(255,255,255,.3)}
+#dash-map{height:340px;width:100%;border-radius:0 0 11px 11px}
+.alert-feed-item{display:flex;gap:11px;align-items:flex-start;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.alert-feed-item:last-child{border-bottom:none}
+.al-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.traffic-item{display:flex;align-items:center;gap:11px;padding:10px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+.traffic-item:last-child{border-bottom:none}
+.clock-badge{font-family:'Courier New',monospace;font-size:11px;color:rgba(255,255,255,0.45);background:rgba(255,255,255,0.05);border:1px solid var(--border-dark);padding:6px 12px;border-radius:6px;letter-spacing:1px}
+.metric-stat{text-align:center}
+.metric-stat .val{font-size:1.5rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.metric-stat .lbl{font-size:10px;color:var(--text-on-light-dim);margin-top:4px;letter-spacing:0.5px}
 </style>
-</head>
-<body>
+{% endblock %}
 
-<canvas id="pcanvas"></canvas>
-
-<div class="page">
-
-<!-- NAV -->
-<nav>
-  <div class="nav-brand">
-    <div class="nav-logo">🚌</div>
-    <div class="nav-title">SMART<br><span>TRANSPORT</span></div>
+{% block content %}
+<!-- ── DARK: TOPBAR + KPIs ── -->
+<div class="topbar">
+  <div><div class="page-title">Fleet Dashboard</div><div class="page-sub">Real-time overview · Harare City Council</div></div>
+  <div class="topbar-right">
+    <div class="clock-badge" id="live-clock">--:--:--</div>
+    <a href="{% url 'alert_list' %}" class="icon-btn"><i class="fa-solid fa-bell"></i></a>
+    <a href="{% url 'map_view' %}" class="icon-btn" title="Live Map"><i class="fa-solid fa-map-location-dot"></i></a>
+    <div class="icon-btn" onclick="window.location.reload()"><i class="fa-solid fa-rotate-right"></i></div>
   </div>
-  <div class="nav-links">
-    <a href="#">Home</a>
-    <a href="#">Fleet</a>
-    <a href="#">Routes</a>
-    <a href="#">Traffic</a>
-    <a href="#">Metrics</a>
+</div>
+
+<div class="kpi-grid kpi-grid-4 gap-mb">
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:#fff"></div><i class="kpi-icon fa-solid fa-truck"></i><div class="kpi-val">{{ total_vehicles|default:"0" }}</div><div class="kpi-label">Total Vehicles</div><span class="kpi-delta delta-up">Fleet</span></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--green-light)"></div><i class="kpi-icon fa-solid fa-route"></i><div class="kpi-val">{{ active_trips|default:"0" }}</div><div class="kpi-label">Active Trips</div><span class="kpi-delta delta-up">Live now</span></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--red-light)"></div><i class="kpi-icon fa-solid fa-triangle-exclamation"></i><div class="kpi-val">{{ traffic_events|default:"0" }}</div><div class="kpi-label">Traffic Events</div><span class="kpi-delta delta-down">High severity</span></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--amber-light)"></div><i class="kpi-icon fa-solid fa-gauge"></i><div class="kpi-val">{{ avg_speed|floatformat:1|default:"0.0" }}</div><div class="kpi-label">Avg Speed km/h</div><span class="kpi-delta delta-neutral">Normal</span></div>
+</div>
+
+<!-- ── DARK: MAP + ALERTS ── -->
+<div class="grid-3-1 gap-mb">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-location-dot"></i> &nbsp;Live Fleet Map</span>
+      <span style="display:inline-flex;align-items:center;font-size:10px;padding:3px 8px;border-radius:99px;background:rgba(74,222,128,0.08);color:var(--green-light);border:1px solid rgba(74,222,128,0.18)"><span class="live-dot"></span>Live</span>
+    </div>
+    <div id="dash-map"></div>
   </div>
-  <button class="nav-cta">Launch Dashboard →</button>
-</nav>
-
-<!-- HERO: 50/50 SPLIT -->
-<div class="hero">
-
-  <!-- LEFT BLUE -->
-  <div class="hero-left">
-    <div class="hero-eyebrow">Harare City Council · 2026</div>
-    <h1 class="hero-h1">Real-Time<br><span>Smart Transport</span><br>System</h1>
-    <p class="hero-desc">
-      A software-based urban logistics platform delivering live GPS fleet tracking,
-      dynamic route optimization, and real-time traffic intelligence — purpose-built
-      for Zimbabwe's municipal operations without hardware dependency.
-    </p>
-    <div class="hero-btns">
-      <button class="btn-primary">View Live Dashboard</button>
-      <button class="btn-ghost">Research Overview</button>
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-bell"></i> &nbsp;Alerts</span>
+      <a href="{% url 'alert_list' %}" style="font-size:10px;color:rgba(255,255,255,0.35);text-decoration:none">All <i class="fa-solid fa-arrow-right fa-xs"></i></a>
     </div>
-    <div class="hero-tags">
-      <span class="hero-tag">GPS Tracking</span>
-      <span class="hero-tag">Route Optimization</span>
-      <span class="hero-tag">WebSocket Updates</span>
-      <span class="hero-tag">Django + Python</span>
-    </div>
-  </div>
-
-  <!-- RIGHT WHITE GLASS -->
-  <div class="hero-right">
-    <div class="stats-title">Live Fleet Overview</div>
-
-    <div class="kpi-row">
-      <div class="kpi">
-        <div class="kpi-icon">🚛</div>
-        <div class="kpi-val">48</div>
-        <div class="kpi-lbl">Total Vehicles</div>
-        <span class="kpi-delta">↑ Active</span>
+    <div class="card-body" style="padding:0 16px;max-height:340px;overflow-y:auto">
+      {% for alert in recent_alerts %}
+      <div class="alert-feed-item">
+        <div class="al-dot" style="background:{% if alert.alert_type == 'traffic' %}var(--red-light){% elif alert.alert_type == 'vehicle' %}var(--amber-light){% else %}var(--blue-light){% endif %}"></div>
+        <div>
+          <div style="font-size:11px;color:var(--text-on-dark)">{{ alert.message|truncatechars:72 }}</div>
+          <div style="font-size:9px;color:var(--text-on-dark-muted);margin-top:2px">{{ alert.created_at|timesince }} ago · {{ alert.alert_type }}</div>
+        </div>
       </div>
-      <div class="kpi">
-        <div class="kpi-icon">📍</div>
-        <div class="kpi-val">12</div>
-        <div class="kpi-lbl">Live Trips</div>
-        <span class="kpi-delta">Now</span>
-      </div>
-      <div class="kpi">
-        <div class="kpi-icon">⚡</div>
-        <div class="kpi-val">47</div>
-        <div class="kpi-lbl">Avg Speed km/h</div>
-        <span class="kpi-delta">Normal</span>
-      </div>
-      <div class="kpi">
-        <div class="kpi-icon">🔔</div>
-        <div class="kpi-val">3</div>
-        <div class="kpi-lbl">Active Alerts</div>
-        <span class="kpi-delta" style="background:rgba(220,38,38,.1);color:#dc2626">High</span>
-      </div>
-    </div>
-
-    <!-- Mini Map -->
-    <div class="map-preview">
-      <div class="map-grid"></div>
-      <div class="map-dots">
-        <div class="dot active" style="top:30%;left:25%"></div>
-        <div class="dot active" style="top:55%;left:42%"></div>
-        <div class="dot active" style="top:20%;left:60%"></div>
-        <div class="dot active" style="top:65%;left:70%"></div>
-        <div class="dot idle" style="top:40%;left:55%"></div>
-        <div class="dot idle" style="top:75%;left:30%"></div>
-        <div class="dot offline" style="top:45%;left:80%"></div>
-      </div>
-      <span class="map-label">HARARE METRO · LIVE</span>
-    </div>
-    <div class="map-legend">
-      <div class="leg"><div class="leg-dot" style="background:#16a34a"></div>Active</div>
-      <div class="leg"><div class="leg-dot" style="background:#d97706"></div>Idle</div>
-      <div class="leg"><div class="leg-dot" style="background:#dc2626"></div>Offline</div>
+      {% empty %}
+      <div style="color:var(--text-on-dark-dim);font-size:11px;padding:14px 0">No recent alerts.</div>
+      {% endfor %}
     </div>
   </div>
 </div>
 
-<!-- OBJECTIVES BAND -->
-<div class="obj-band">
-  <div class="obj-card">
-    <div class="obj-num">OBJ 01</div>
-    <span class="obj-icon">🗺️</span>
-    <div class="obj-title">Real-Time Traffic & Route Integration</div>
-  </div>
-  <div class="obj-card">
-    <div class="obj-num">OBJ 02</div>
-    <span class="obj-icon">📱</span>
-    <div class="obj-title">Mobile GPS Fleet Tracking</div>
-  </div>
-  <div class="obj-card">
-    <div class="obj-num">OBJ 03</div>
-    <span class="obj-icon">⚡</span>
-    <div class="obj-title">Dynamic Route Optimization</div>
-  </div>
-  <div class="obj-card">
-    <div class="obj-num">OBJ 04</div>
-    <span class="obj-icon">🔄</span>
-    <div class="obj-title">WebSocket Real-Time Updates</div>
-  </div>
-  <div class="obj-card">
-    <div class="obj-num">OBJ 05</div>
-    <span class="obj-icon">📊</span>
-    <div class="obj-title">Operational Efficiency Evaluation</div>
-  </div>
-</div>
+<!-- ── WHITE: FLEET STATUS + TRAFFIC ── -->
+<div class="section-white gap-mb">
+  <div class="grid-2">
+    <div class="card-white">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-list"></i> &nbsp;Fleet Status</span>
+        <a href="{% url 'fleet_list' %}" style="font-size:10px;color:rgba(0,0,0,0.4);text-decoration:none">View all <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+      </div>
+      <div class="dt-light">
+        <table id="dt-fleet" class="data-table" style="color:var(--text-on-light)">
+          <thead><tr>
+            <th style="color:var(--text-on-light-muted)">Reg #</th>
+            <th style="color:var(--text-on-light-muted)">Driver</th>
+            <th style="color:var(--text-on-light-muted)">Status</th>
+            <th style="color:var(--text-on-light-muted)">Speed</th>
+          </tr></thead>
+          <tbody>
+            {% for v in vehicles %}
+            <tr>
+              <td><span style="font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:var(--text-on-light)">{{ v.registration_number }}</span></td>
+              <td style="color:var(--text-on-light)">{{ v.driver_name }}</td>
+              <td><span class="status-dot dot-{{ v.status }}"></span><span style="color:var(--text-on-light)">{{ v.status|capfirst }}</span></td>
+              <td style="color:var(--text-on-light)">{{ v.speed|floatformat:0 }} km/h</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="text-align:center;color:var(--text-on-light-dim);padding:20px">No vehicles found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-<!-- FEATURES: ALTERNATING 50/50 -->
-<div class="feature-section">
-  <div class="feat-blue">
-    <div class="feat-label">Fleet Intelligence</div>
-    <h2 class="feat-h2">Mobile-First GPS Fleet Tracking</h2>
-    <p class="feat-body">
-      Municipal vehicles are tracked in real-time via mobile GPS without requiring
-      dedicated hardware installations. The system records location logs, speed, and
-      status for every vehicle in the Harare City Council fleet.
-    </p>
-    <ul class="feat-list">
-      <li><span class="check">✓</span>Live vehicle position updates</li>
-      <li><span class="check">✓</span>Driver assignment & trip history</li>
-      <li><span class="check">✓</span>Active / Idle / Offline status monitoring</li>
-      <li><span class="check">✓</span>Speed & utilization analytics</li>
-    </ul>
-  </div>
-  <div class="feat-white">
-    <div class="feat-label">Route Engine</div>
-    <h2 class="feat-h2" style="color:#1e3a8a">Dynamic Route Optimization</h2>
-    <p class="feat-body" style="color:#374151">
-      Dijkstra-based shortest path algorithms dynamically recalculate routes
-      using live congestion multipliers. When a traffic event is reported,
-      the system automatically suggests faster alternatives in real time.
-    </p>
-    <ul class="feat-list">
-      <li><span class="check">✓</span>Graph-based node/edge road network</li>
-      <li><span class="check">✓</span>Congestion-weighted travel times</li>
-      <li><span class="check">✓</span>Precomputed route storage</li>
-      <li><span class="check">✓</span>Reduces idle time by up to 40%</li>
-    </ul>
-  </div>
-</div>
-
-<div class="feature-section">
-  <div class="feat-white">
-    <div class="feat-label">Traffic Awareness</div>
-    <h2 class="feat-h2" style="color:#1e3a8a">Live Traffic Event Monitoring</h2>
-    <p class="feat-body" style="color:#374151">
-      Traffic incidents — accidents, roadworks, congestion — are logged with GPS
-      coordinates and severity scores. The system propagates these events to
-      affected routes within seconds using WebSocket push notifications.
-    </p>
-    <ul class="feat-list">
-      <li><span class="check">✓</span>Low / Medium / High severity events</li>
-      <li><span class="check">✓</span>Geo-tagged incident reporting</li>
-      <li><span class="check">✓</span>Congestion multiplier propagation</li>
-      <li><span class="check">✓</span>Operator alert broadcasts</li>
-    </ul>
-  </div>
-  <div class="feat-blue">
-    <div class="feat-label">System Evaluation</div>
-    <h2 class="feat-h2">Performance Metrics Dashboard</h2>
-    <p class="feat-body">
-      Objective 5 of the research is addressed through a dedicated metrics module
-      that measures average travel time, route efficiency scores, fleet utilization
-      rates, and response time to service requests over time.
-    </p>
-    <ul class="feat-list">
-      <li><span class="check">✓</span>Avg travel & response time tracking</li>
-      <li><span class="check">✓</span>Route efficiency score (0–100)</li>
-      <li><span class="check">✓</span>Fleet utilization % per day</li>
-      <li><span class="check">✓</span>Historical trend comparison</li>
-    </ul>
-  </div>
-</div>
-
-<!-- GLASS CARDS: CONTEXT + MOTIVATION -->
-<div class="glass-section">
-  <div class="glass-section-title">Research Context</div>
-  <div class="glass-section-h2">Why Harare Needs This System</div>
-  <div class="glass-grid">
-    <div class="glass-card">
-      <div class="gc-icon">🏙️</div>
-      <div class="gc-title">Urban Logistics Crisis</div>
-      <div class="gc-body">
-        Delivery vehicles in congested urban environments spend 28–40% of their
-        time idling, generating economic losses and environmental degradation in
-        cities like Harare.
+    <div class="card-white">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> &nbsp;Traffic Events</span>
+        <a href="{% url 'traffic_list' %}" style="font-size:10px;color:rgba(0,0,0,0.4);text-decoration:none">View all <i class="fa-solid fa-arrow-right fa-xs"></i></a>
       </div>
-      <div class="gc-ref">Kai et al., 2025</div>
-    </div>
-    <div class="glass-card">
-      <div class="gc-icon">📡</div>
-      <div class="gc-title">Software-First Approach</div>
-      <div class="gc-body">
-        Wagga Wagga City Council saved $1.1M through data-driven fleet management.
-        This system replicates that model at zero hardware cost using mobile GPS
-        and open-source Django infrastructure.
+      <div class="card-body">
+        {% for event in all_traffic|slice:":7" %}
+        <div class="traffic-item">
+          <span class="badge badge-{% if event.severity == 'high' %}red-light{% elif event.severity == 'medium' %}amber-light{% else %}green-light{% endif %}">{{ event.severity }}</span>
+          <div>
+            <div style="font-size:12px;color:var(--text-on-light)">{{ event.description|truncatechars:58|default:"Traffic incident reported" }}</div>
+            <div style="font-size:10px;color:var(--text-on-light-dim);margin-top:2px"><i class="fa-solid fa-location-dot fa-xs"></i> {{ event.latitude|floatformat:4 }}, {{ event.longitude|floatformat:4 }} · {{ event.timestamp|timesince }} ago</div>
+          </div>
+        </div>
+        {% empty %}
+        <div style="color:var(--text-on-light-dim);font-size:12px">No traffic events.</div>
+        {% endfor %}
       </div>
-      <div class="gc-ref">IPWEA, 2025</div>
-    </div>
-    <div class="glass-card">
-      <div class="gc-icon">🌍</div>
-      <div class="gc-title">African Innovation Model</div>
-      <div class="gc-body">
-        Nairobi logistics companies achieved major efficiency gains using AI-powered
-        route optimization on basic smartphones — proving that frugal engineering
-        can transform Sub-Saharan urban logistics.
-      </div>
-      <div class="gc-ref">BusinessDay Nigeria, 2025</div>
-    </div>
-    <div class="glass-card">
-      <div class="gc-icon">🏛️</div>
-      <div class="gc-title">Ward 14 Case Study</div>
-      <div class="gc-body">
-        Kambuzuma residents face absent refuse collection, deteriorated roads, and
-        failed water infrastructure — all symptoms of broken logistics governance
-        that this system directly targets.
-      </div>
-      <div class="gc-ref">Mutandiro, 2025</div>
-    </div>
-    <div class="glass-card">
-      <div class="gc-icon">🔗</div>
-      <div class="gc-title">Digital Twin Precedent</div>
-      <div class="gc-body">
-        Chattanooga, Tennessee's multi-domain urban mobility platform demonstrates
-        the feasibility of software-centric traffic management replicable in
-        resource-constrained municipalities.
-      </div>
-      <div class="gc-ref">Xu et al., 2023</div>
-    </div>
-    <div class="glass-card">
-      <div class="gc-icon">📈</div>
-      <div class="gc-title">Scalable to Zimbabwe</div>
-      <div class="gc-body">
-        Designed to scale across Zimbabwean municipalities with variable internet
-        connectivity. All core tracking, routing, and alerting functions operate
-        with intermittent data availability.
-      </div>
-      <div class="gc-ref">Razemba, 2026</div>
     </div>
   </div>
 </div>
 
-<!-- FOOTER -->
-<footer>
-  <div class="footer-brand">SMART <span>TRANSPORT</span> SYSTEM · HARARE CITY COUNCIL</div>
-  <div class="footer-right">© 2026 · Allons Tafadzwa Mazani · Research Prototype</div>
-</footer>
-
+<!-- ── DARK: METRICS ── -->
+{% if metrics %}
+<div class="card gap-mb">
+  <div class="card-header">
+    <span class="card-title"><i class="fa-solid fa-chart-bar"></i> &nbsp;Performance Metrics · {{ metrics.date }}</span>
+    <a href="{% url 'metrics_view' %}" style="font-size:10px;color:rgba(255,255,255,0.35);text-decoration:none">Details <i class="fa-solid fa-arrow-right fa-xs"></i></a>
+  </div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:20px">
+      <div class="metric-stat"><div class="val">{{ metrics.avg_travel_time|floatformat:1 }}</div><div class="lbl" style="color:var(--text-on-dark-dim)">Avg Travel (min)</div></div>
+      <div class="metric-stat"><div class="val" style="color:var(--blue-light)">{{ metrics.avg_response_time|floatformat:1 }}</div><div class="lbl" style="color:var(--text-on-dark-dim)">Response (min)</div></div>
+      <div class="metric-stat"><div class="val" style="color:var(--green-light)">{{ metrics.avg_route_efficiency|floatformat:1 }}</div><div class="lbl" style="color:var(--text-on-dark-dim)">Route Efficiency</div></div>
+      <div class="metric-stat"><div class="val" style="color:var(--amber-light)">{{ metrics.fleet_utilization|floatformat:1 }}%</div><div class="lbl" style="color:var(--text-on-dark-dim)">Fleet Utilisation</div></div>
+      <div class="metric-stat"><div class="val" style="color:var(--red-light)">{{ metrics.idle_time|floatformat:1 }}</div><div class="lbl" style="color:var(--text-on-dark-dim)">Avg Idle (min)</div></div>
+    </div>
+  </div>
 </div>
+{% endif %}
 
+<!-- ── WHITE: QUICK ACTIONS ── -->
+<div class="section-white">
+  <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-on-light-dim);margin-bottom:14px">Quick Actions</div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <a href="{% url 'fleet_list' %}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-truck"></i> Manage Fleet</a>
+    <a href="{% url 'trip_list' %}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-route"></i> View Trips</a>
+    <a href="{% url 'map_view' %}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-map-location-dot"></i> Live Map</a>
+    <a href="{% url 'traffic_list' %}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-triangle-exclamation"></i> Traffic Events</a>
+    <a href="{% url 'alert_list' %}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-bell"></i> Alerts</a>
+    <a href="{% url 'analytics_view' %}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-chart-bar"></i> Analytics</a>
+    <a href="{% url 'metrics_view' %}" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-chart-line"></i> Performance</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-const c=document.getElementById('pcanvas');
-const ctx=c.getContext('2d');
-let W,H,pts=[];
+function tick(){document.getElementById('live-clock').textContent=new Date().toLocaleTimeString('en-GB',{hour12:false})}
+tick();setInterval(tick,1000);
+var map=L.map('dash-map',{zoomControl:false}).setView([-17.8252,31.0335],12);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© CartoDB'}).addTo(map);
+{% for v in vehicles %}{% if v.current_latitude and v.current_longitude %}
+L.circleMarker([{{ v.current_latitude }},{{ v.current_longitude }}],{radius:8,fillColor:"{% if v.status == 'active' %}#4ade80{% elif v.status == 'idle' %}#fbbf24{% else %}#f87171{% endif %}",color:'#090909',weight:2,fillOpacity:.9}).addTo(map).bindPopup('<div style="font-family:monospace;font-size:11px;background:#111;color:#f0f0f0;padding:8px;border-radius:6px;min-width:130px"><b style="color:#fff">{{ v.registration_number }}</b><br>{{ v.driver_name }}<br>{{ v.status|capfirst }} · {{ v.speed|floatformat:0 }} km/h</div>');
+{% endif %}{% endfor %}
+setTimeout(()=>map.invalidateSize(),400);
 
-function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
-resize();window.addEventListener('resize',()=>{resize();init()});
-
-function init(){
-  pts=[];
-  const n=Math.floor(W*H/14000);
-  for(let i=0;i<n;i++){
-    pts.push({
-      x:Math.random()*W,y:Math.random()*H,
-      vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,
-      r:Math.random()*2+1
-    });
-  }
-}
-init();
-
-function draw(){
-  ctx.clearRect(0,0,W,H);
-  pts.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;
-    if(p.x<0||p.x>W)p.vx*=-1;
-    if(p.y<0||p.y>H)p.vy*=-1;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle='rgba(147,197,253,0.35)';
-    ctx.fill();
-  });
-  pts.forEach((a,i)=>{
-    pts.slice(i+1).forEach(b=>{
-      const d=Math.hypot(a.x-b.x,a.y-b.y);
-      if(d<120){
-        ctx.beginPath();
-        ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-        ctx.strokeStyle=`rgba(147,197,253,${0.12*(1-d/120)})`;
-        ctx.lineWidth=.8;ctx.stroke();
-      }
-    });
-  });
-  requestAnimationFrame(draw);
-}
-draw();
+$(document).ready(function(){
+  $('#dt-fleet').DataTable(Object.assign({},dtLight,{dom:'<"d-flex align-items-center justify-content-between mb-2"<"dt-buttons"B><"d-flex gap-2"fl>>rtip',pageLength:8,lengthMenu:[[8,15,25,-1],[8,15,25,'All']]}));
+});
 </script>
-</body>
-</html>
+{% endblock %}

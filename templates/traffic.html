@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Traffic Events | Smart Transport{% endblock %}
+{% block nav_traffic %}active{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div><div class="page-title">Traffic Events</div><div class="page-sub">Monitor and log incidents across Harare</div></div>
+  <button class="btn btn-dark" onclick="openModal('trafficModal')"><i class="fa-solid fa-plus"></i> Log Event</button>
+</div>
+<div class="kpi-grid kpi-grid-3 gap-mb">
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--red-light)"></div><div class="kpi-val" style="color:var(--red-light)">{{ high_count|default:0 }}</div><div class="kpi-label">High Severity</div><span class="kpi-delta delta-down">Urgent</span></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--amber-light)"></div><div class="kpi-val" style="color:var(--amber-light)">{{ medium_count|default:0 }}</div><div class="kpi-label">Medium Severity</div></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--green-light)"></div><div class="kpi-val" style="color:var(--green-light)">{{ low_count|default:0 }}</div><div class="kpi-label">Low Severity</div></div>
+</div>
+<div class="section-white">
+  <div class="card-white">
+    <div class="card-header">
+      <span class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> &nbsp;All Traffic Events</span>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-outline-light btn-xs f-btn on" onclick="fEv(this,'all')">All</button>
+        <button class="btn btn-outline-light btn-xs f-btn" onclick="fEv(this,'high')">High</button>
+        <button class="btn btn-outline-light btn-xs f-btn" onclick="fEv(this,'medium')">Medium</button>
+        <button class="btn btn-outline-light btn-xs f-btn" onclick="fEv(this,'low')">Low</button>
+      </div>
+    </div>
+    <div class="card-body-flush dt-light">
+      <table id="dt-traffic" class="data-table" style="color:var(--text-on-light);width:100%">
+        <thead><tr>
+          <th style="color:var(--text-on-light-muted)">#</th>
+          <th style="color:var(--text-on-light-muted)">Severity</th>
+          <th style="color:var(--text-on-light-muted)">Description</th>
+          <th style="color:var(--text-on-light-muted)">Latitude</th>
+          <th style="color:var(--text-on-light-muted)">Longitude</th>
+          <th style="color:var(--text-on-light-muted)">Reported</th>
+          <th style="color:var(--text-on-light-muted)">Action</th>
+        </tr></thead>
+        <tbody>
+          {% for event in events %}
+          <tr data-sev="{{ event.severity }}">
+            <td style="color:var(--text-on-light-dim)">{{ forloop.counter }}</td>
+            <td><span class="badge badge-{% if event.severity == 'high' %}red-light{% elif event.severity == 'medium' %}amber-light{% else %}green-light{% endif %}">{{ event.severity }}</span></td>
+            <td style="color:var(--text-on-light);max-width:240px">{{ event.description|default:"—" }}</td>
+            <td style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-on-light-dim)">{{ event.latitude|floatformat:4 }}</td>
+            <td style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-on-light-dim)">{{ event.longitude|floatformat:4 }}</td>
+            <td style="color:var(--text-on-light-dim);font-size:11px">{{ event.timestamp|timesince }} ago</td>
+            <td><form method="post" action="{% url 'traffic_delete' event.id %}" onsubmit="return confirm('Remove?')">{% csrf_token %}<button type="submit" class="btn btn-danger btn-xs"><i class="fa-solid fa-trash"></i></button></form></td>
+          </tr>
+          {% empty %}<tr><td colspan="7" style="text-align:center;color:var(--text-on-light-dim);padding:24px">No events logged.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="trafficModal">
+  <div class="modal"><button class="modal-close" onclick="closeModal('trafficModal')"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-title">Log Traffic Event</div>
+    <form method="post" action="{% url 'traffic_create' %}">{% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group"><label class="form-label">Severity</label><select name="severity" class="form-control"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+        <div class="form-group"><label class="form-label">&nbsp;</label><div style="font-size:11px;color:var(--text-on-dark-dim);padding:9px 0">Set the urgency level of the incident.</div></div>
+        <div class="form-group"><label class="form-label">Latitude</label><input type="number" name="latitude" placeholder="-17.8252" step="any" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Longitude</label><input type="number" name="longitude" placeholder="31.0335" step="any" class="form-control" required></div>
+        <div class="form-group full"><label class="form-label">Description</label><textarea name="description" rows="3" placeholder="Describe the incident…" class="form-control"></textarea></div>
+        <div class="form-actions"><button type="button" class="btn btn-outline-dark" onclick="closeModal('trafficModal')">Cancel</button><button type="submit" class="btn btn-dark"><i class="fa-solid fa-location-dot"></i> Log Event</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>
+$(document).ready(function(){$('#dt-traffic').DataTable(Object.assign({},dtLight,{columnDefs:[{orderable:false,targets:[0,6]}]}))});
+function fEv(btn,s){document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.querySelectorAll('#dt-traffic tbody tr').forEach(r=>{r.style.display=(s==='all'||r.dataset.sev===s)?'':'none'});}
+</script>{% endblock %}

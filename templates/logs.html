@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Site Logs | Smart Transport{% endblock %}
+{% block nav_logs %}active{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div><div class="page-title">Site Visit Logs</div><div class="page-sub">All HTTP requests logged across the system</div></div>
+  <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border-dark);padding:7px 13px;border-radius:7px;font-size:11px;color:var(--text-on-dark-dim)">
+    <i class="fa-solid fa-database fa-xs"></i> &nbsp;{{ total_visits|default:0 }} visits &nbsp;·&nbsp; {{ unique_paths|default:0 }} unique paths
+  </div>
+</div>
+<div class="section-white">
+  <div class="card-white">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-scroll"></i> &nbsp;Request Log</span><span style="font-size:10px;color:var(--text-on-light-dim)">Most recent 200 entries</span></div>
+    <div class="card-body-flush dt-light" style="overflow-x:auto">
+      <table id="dt-logs" class="data-table" style="color:var(--text-on-light);width:100%">
+        <thead><tr>
+          <th style="color:var(--text-on-light-muted)">#</th>
+          <th style="color:var(--text-on-light-muted)">User</th>
+          <th style="color:var(--text-on-light-muted)">Method</th>
+          <th style="color:var(--text-on-light-muted)">Path</th>
+          <th style="color:var(--text-on-light-muted)">IP Address</th>
+          <th style="color:var(--text-on-light-muted)">Timestamp</th>
+        </tr></thead>
+        <tbody>
+          {% for log in logs %}
+          <tr>
+            <td style="color:var(--text-on-light-dim)">{{ forloop.counter }}</td>
+            <td>
+              {% if log.user %}
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.08);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--text-on-light)">{{ log.user.username|first|upper }}</div>
+                <span style="color:var(--text-on-light)">{{ log.user.username }}</span>
+              </div>
+              {% else %}<span style="color:var(--text-on-light-dim)">Anonymous</span>{% endif %}
+            </td>
+            <td><span class="badge badge-{% if log.method == 'POST' %}amber-light{% elif log.method == 'DELETE' %}red-light{% else %}dark{% endif %}" style="font-family:'Courier New',monospace;font-size:9px">{{ log.method }}</span></td>
+            <td style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-on-light);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ log.path }}</td>
+            <td style="font-family:'Courier New',monospace;font-size:11px;color:var(--text-on-light-dim)">{{ log.ip_address|default:"—" }}</td>
+            <td style="color:var(--text-on-light-dim);font-size:11px;white-space:nowrap">{{ log.timestamp|date:"d M Y H:i" }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="6" style="text-align:center;color:var(--text-on-light-dim);padding:24px">No logs recorded yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>$(document).ready(function(){$('#dt-logs').DataTable(Object.assign({},dtLight,{order:[[5,'desc']],columnDefs:[{orderable:false,targets:[0]}]}))});</script>{% endblock %}

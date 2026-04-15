@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Performance Metrics | Smart Transport{% endblock %}
+{% block nav_metrics %}active{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div><div class="page-title">Performance Metrics</div><div class="page-sub">Operational efficiency data for the Harare fleet</div></div>
+  <button class="btn btn-dark" onclick="openModal('metricsModal')"><i class="fa-solid fa-plus"></i> Record Metrics</button>
+</div>
+{% if latest %}
+<div class="kpi-grid kpi-grid-4 gap-mb">
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:#fff"></div><div class="kpi-val">{{ latest.avg_travel_time|floatformat:1 }}</div><div class="kpi-label">Avg Travel (min)</div></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--blue-light)"></div><div class="kpi-val" style="color:var(--blue-light)">{{ latest.avg_response_time|floatformat:1 }}</div><div class="kpi-label">Avg Response (min)</div></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--green-light)"></div><div class="kpi-val" style="color:var(--green-light)">{{ latest.avg_route_efficiency|floatformat:1 }}</div><div class="kpi-label">Route Efficiency</div></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--amber-light)"></div><div class="kpi-val" style="color:var(--amber-light)">{{ latest.fleet_utilization|floatformat:1 }}%</div><div class="kpi-label">Fleet Utilisation</div></div>
+</div>
+{% endif %}
+<div class="section-white">
+  <div class="card-white">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-table"></i> &nbsp;Metrics History</span><span style="font-size:10px;color:var(--text-on-light-dim)">{{ all_metrics|length }} record{{ all_metrics|length|pluralize }}</span></div>
+    <div class="card-body-flush dt-light">
+      <table id="dt-metrics" class="data-table" style="color:var(--text-on-light);width:100%">
+        <thead><tr>
+          <th style="color:var(--text-on-light-muted)">Date</th>
+          <th style="color:var(--text-on-light-muted)">Travel (min)</th>
+          <th style="color:var(--text-on-light-muted)">Response (min)</th>
+          <th style="color:var(--text-on-light-muted)">Route Efficiency</th>
+          <th style="color:var(--text-on-light-muted)">Fleet Utilisation</th>
+          <th style="color:var(--text-on-light-muted)">Idle (min)</th>
+        </tr></thead>
+        <tbody>
+          {% for m in all_metrics %}
+          <tr>
+            <td style="font-weight:600;color:var(--text-on-light)">{{ m.date }}</td>
+            <td style="color:var(--text-on-light)">{{ m.avg_travel_time|floatformat:1 }}</td>
+            <td style="color:var(--text-on-light)">{{ m.avg_response_time|floatformat:1 }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:7px">
+                <div style="width:64px;height:4px;background:rgba(0,0,0,0.08);border-radius:2px"><div style="height:100%;border-radius:2px;background:var(--green);width:{{ m.avg_route_efficiency|floatformat:0 }}%"></div></div>
+                <span style="color:var(--text-on-light)">{{ m.avg_route_efficiency|floatformat:1 }}</span>
+              </div>
+            </td>
+            <td>
+              <div style="display:flex;align-items:center;gap:7px">
+                <div style="width:64px;height:4px;background:rgba(0,0,0,0.08);border-radius:2px"><div style="height:100%;border-radius:2px;background:var(--amber);width:{{ m.fleet_utilization|floatformat:0 }}%"></div></div>
+                <span style="color:var(--text-on-light)">{{ m.fleet_utilization|floatformat:1 }}%</span>
+              </div>
+            </td>
+            <td style="color:var(--text-on-light)">{{ m.idle_time|floatformat:1 }}</td>
+          </tr>
+          {% empty %}<tr><td colspan="6" style="text-align:center;color:var(--text-on-light-dim);padding:24px">No metrics yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal-bg" id="metricsModal">
+  <div class="modal"><button class="modal-close" onclick="closeModal('metricsModal')"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-title">Record Performance Metrics</div>
+    <form method="post" action="{% url 'metrics_create' %}">{% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group full"><label class="form-label">Date</label><input type="date" name="date" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Avg Travel Time (min)</label><input type="number" name="avg_travel_time" placeholder="0.0" step="0.1" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Avg Response Time (min)</label><input type="number" name="avg_response_time" placeholder="0.0" step="0.1" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Route Efficiency (0-100)</label><input type="number" name="avg_route_efficiency" placeholder="0.0" min="0" max="100" step="0.1" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">Fleet Utilisation (%)</label><input type="number" name="fleet_utilization" placeholder="0.0" min="0" max="100" step="0.1" class="form-control" required></div>
+        <div class="form-group full"><label class="form-label">Avg Idle Time (min)</label><input type="number" name="idle_time" placeholder="0.0" step="0.1" class="form-control" required></div>
+        <div class="form-actions"><button type="button" class="btn btn-outline-dark" onclick="closeModal('metricsModal')">Cancel</button><button type="submit" class="btn btn-dark"><i class="fa-solid fa-floppy-disk"></i> Save</button></div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}<script>
+$(document).ready(function(){$('#dt-metrics').DataTable(Object.assign({},dtLight,{order:[[0,'desc']]}))});
+document.querySelector('input[name=date]').value=new Date().toISOString().split('T')[0];
+</script>{% endblock %}

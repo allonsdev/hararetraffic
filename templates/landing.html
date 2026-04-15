@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Transport · Harare City Council</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{--dark:#090909;--dark2:#111;--dark3:#1c1c1c;--light:#fff;--light2:#f7f7f7;--light3:#efefef;--border-d:rgba(255,255,255,0.08);--border-d2:rgba(255,255,255,0.14);--border-l:rgba(0,0,0,0.08);--border-l2:rgba(0,0,0,0.14);--text-d:#f0f0f0;--text-d2:rgba(240,240,240,0.5);--text-l:#111;--text-l2:rgba(17,17,17,0.55);--green:#4ade80;--red:#f87171;--amber:#fbbf24}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--dark);color:var(--text-d);overflow-x:hidden;line-height:1.6}
+#pcanvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.3}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(9,9,9,0.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border-d);padding:0 48px;display:flex;align-items:center;justify-content:space-between;height:58px}
+.nav-brand{display:flex;align-items:center;gap:10px}
+.nav-ico{width:32px;height:32px;border-radius:7px;background:#fff;display:flex;align-items:center;justify-content:center;color:#000;font-size:14px}
+.nav-nm{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-d)}
+.nav-nm small{display:block;font-size:9px;opacity:0.45;font-weight:400}
+.nav-links{display:flex;gap:26px}
+.nav-links a{font-size:12px;color:rgba(240,240,240,0.5);text-decoration:none;transition:color .18s}
+.nav-links a:hover{color:#fff}
+.nav-cta{background:#fff;color:#000;border:none;padding:8px 18px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.4px;transition:all .18s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.nav-cta:hover{background:#e5e5e5}
+
+/* HERO - DARK */
+.hero{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 58px);border-bottom:1px solid var(--border-d)}
+.hero-left{padding:72px 56px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border-d)}
+.eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.eyebrow::before{content:'';width:18px;height:1px;background:rgba(255,255,255,0.25)}
+h1{font-size:3.2rem;font-weight:800;line-height:1.08;letter-spacing:-1.5px;margin-bottom:20px;color:#fff}
+h1 em{font-style:normal;color:rgba(255,255,255,0.38)}
+.hero-desc{font-size:14px;line-height:1.72;color:rgba(240,240,240,0.55);max-width:400px;margin-bottom:32px}
+.hero-btns{display:flex;gap:11px;flex-wrap:wrap}
+.btn-hero{background:#fff;color:#000;border:none;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.btn-hero:hover{background:#e8e8e8;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--text-d);border:1px solid var(--border-d2);padding:12px 24px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.btn-ghost:hover{border-color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.04)}
+.tags{display:flex;gap:7px;margin-top:24px;flex-wrap:wrap}
+.tag{font-size:10px;padding:3px 9px;border-radius:99px;background:rgba(255,255,255,0.05);border:1px solid var(--border-d);color:rgba(255,255,255,0.4)}
+
+.hero-right{background:rgba(255,255,255,0.015);padding:56px 48px;display:flex;flex-direction:column;justify-content:center}
+.panel-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:16px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:16px}
+.kpi{background:rgba(255,255,255,0.04);border:1px solid var(--border-d);border-radius:11px;padding:16px}
+.kv{font-size:2rem;font-weight:700;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+.kl{font-size:10px;color:rgba(255,255,255,0.38);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.kb{font-size:9px;padding:2px 7px;border-radius:99px;margin-top:7px;display:inline-block}
+.map-box{background:rgba(255,255,255,0.02);border:1px solid var(--border-d);border-radius:11px;padding:14px;position:relative;overflow:hidden;height:138px;display:flex;align-items:center;justify-content:center}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:26px 26px}
+.map-dot{position:absolute;border-radius:50%;border:2px solid rgba(0,0,0,0.5)}
+.map-dot.a{width:10px;height:10px;background:var(--green);box-shadow:0 0 0 3px rgba(74,222,128,0.18)}
+.map-dot.i{width:8px;height:8px;background:var(--amber)}
+.map-dot.o{width:8px;height:8px;background:var(--red)}
+.map-lbl{position:relative;z-index:1;font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.3);text-transform:uppercase}
+.leg{display:flex;gap:14px;margin-top:10px;justify-content:center}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:rgba(255,255,255,0.38)}
+.leg-d{width:7px;height:7px;border-radius:50%}
+
+/* OBJ BAND - WHITE */
+.obj-band{background:var(--light2);border-top:1px solid var(--border-l);border-bottom:1px solid var(--border-l);display:grid;grid-template-columns:repeat(5,1fr);position:relative;z-index:1}
+.obj{padding:28px 18px;text-align:center;border-right:1px solid var(--border-l);cursor:default;transition:background .18s}
+.obj:last-child{border-right:none}
+.obj:hover{background:rgba(0,0,0,0.03)}
+.obj-num{font-size:9px;color:rgba(0,0,0,0.28);letter-spacing:2px;text-transform:uppercase;margin-bottom:9px}
+.obj-icon{font-size:20px;margin-bottom:9px;display:block;color:rgba(0,0,0,0.5)}
+.obj-title{font-size:11px;font-weight:600;color:rgba(0,0,0,0.65);line-height:1.4}
+
+/* FEATURES - alternate dark/light */
+.feat-dark{background:var(--dark);padding:60px 56px;border-right:1px solid var(--border-d);position:relative;z-index:1}
+.feat-light{background:var(--light2);padding:60px 56px;position:relative;z-index:1;color:var(--text-l)}
+.feat-row{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border-d)}
+.feat-row:nth-child(odd) .feat-dark{border-right:none;border-left:1px solid var(--border-d)}
+.feat-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:12px}
+.feat-dark .feat-label{color:rgba(255,255,255,0.3)}
+.feat-light .feat-label{color:rgba(0,0,0,0.35)}
+.feat-h2{font-size:20px;font-weight:700;letter-spacing:-0.3px;margin-bottom:13px;line-height:1.25}
+.feat-dark .feat-h2{color:#fff}
+.feat-light .feat-h2{color:var(--text-l)}
+.feat-body{font-size:13px;line-height:1.7;margin-bottom:22px}
+.feat-dark .feat-body{color:rgba(240,240,240,0.52)}
+.feat-light .feat-body{color:rgba(17,17,17,0.6)}
+.feat-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.feat-list li{display:flex;align-items:center;gap:9px;font-size:12px}
+.feat-dark .feat-list li{color:rgba(255,255,255,0.62)}
+.feat-light .feat-list li{color:rgba(0,0,0,0.6)}
+.feat-list i{font-size:11px;opacity:0.55;width:13px}
+
+/* RESEARCH - WHITE */
+.research-band{background:var(--light);border-top:1px solid var(--border-l);border-bottom:1px solid var(--border-l);padding:64px 48px;position:relative;z-index:1}
+.band-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(0,0,0,0.3);text-align:center;margin-bottom:6px}
+.band-title{font-size:24px;font-weight:700;text-align:center;color:var(--text-l);margin-bottom:36px;letter-spacing:-0.3px}
+.cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.info-card{background:var(--light2);border:1px solid var(--border-l);border-radius:11px;padding:22px;transition:all .2s}
+.info-card:hover{background:var(--light3);transform:translateY(-3px)}
+.ic-icon{width:38px;height:38px;border-radius:9px;background:rgba(0,0,0,0.05);border:1px solid var(--border-l);display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:12px;color:rgba(0,0,0,0.5)}
+.ic-title{font-size:12px;font-weight:700;color:var(--text-l);margin-bottom:7px}
+.ic-body{font-size:11px;color:var(--text-l2);line-height:1.6}
+.ic-ref{font-size:10px;color:rgba(0,0,0,0.3);margin-top:9px;font-style:italic}
+
+/* TECH - DARK */
+.tech-band{background:var(--dark);border-top:1px solid var(--border-d);padding:56px 48px;position:relative;z-index:1}
+.tech-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tech-card{background:rgba(255,255,255,0.03);border:1px solid var(--border-d);border-radius:10px;padding:20px;text-align:center}
+.tech-val{font-size:2rem;font-weight:700;color:#fff;line-height:1;font-variant-numeric:tabular-nums}
+.tech-lbl{font-size:10px;color:rgba(240,240,240,0.38);text-transform:uppercase;letter-spacing:1px;margin-top:5px}
+
+/* CTA - WHITE */
+.cta-band{background:var(--light2);border-top:1px solid var(--border-l);padding:64px 48px;text-align:center;position:relative;z-index:1}
+.cta-title{font-size:2rem;font-weight:700;color:var(--text-l);margin-bottom:12px;letter-spacing:-0.5px}
+.cta-sub{font-size:14px;color:var(--text-l2);margin-bottom:28px}
+.cta-btns{display:flex;gap:11px;justify-content:center}
+.btn-cta-dark{background:var(--text-l);color:#fff;border:none;padding:13px 28px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.btn-cta-dark:hover{background:#333;transform:translateY(-1px)}
+.btn-cta-outline{background:transparent;color:var(--text-l);border:1px solid var(--border-l2);padding:13px 28px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:7px}
+.btn-cta-outline:hover{border-color:rgba(0,0,0,0.25)}
+
+footer{background:var(--dark2);border-top:1px solid var(--border-d);padding:22px 48px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1}
+.f-brand{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3)}
+.f-right{font-size:10px;color:rgba(255,255,255,0.2)}
+
+@media(max-width:900px){.hero{grid-template-columns:1fr}.hero-right{display:none}.nav-links{display:none}.obj-band{grid-template-columns:1fr 1fr}.feat-row{grid-template-columns:1fr}.cards-grid{grid-template-columns:1fr}.tech-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<canvas id="pcanvas"></canvas>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-ico"><i class="fa-solid fa-bus"></i></div>
+    <div class="nav-nm">Smart Transport<small>Harare City Council</small></div>
+  </div>
+  <div class="nav-links">
+    <a href="#objectives">Objectives</a>
+    <a href="#features">Features</a>
+    <a href="#research">Research</a>
+    <a href="#tech">System</a>
+  </div>
+  <a href="/login/" class="nav-cta"><i class="fa-solid fa-gauge-high fa-xs"></i> Launch Dashboard</a>
+</nav>
+
+<!-- HERO: DARK -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="eyebrow">Harare City Council · 2026</div>
+    <h1>Real-Time<br><em>Smart</em><br>Transport</h1>
+    <p class="hero-desc">A software-first urban logistics platform delivering live GPS fleet tracking, dynamic route optimisation, and real-time traffic intelligence — purpose-built for Zimbabwe's municipal operations without hardware dependency.</p>
+    <div class="hero-btns">
+      <a href="/login/" class="btn-hero"><i class="fa-solid fa-gauge-high fa-xs"></i> View Dashboard</a>
+      <a href="#research" class="btn-ghost"><i class="fa-solid fa-book-open fa-xs"></i> Research Overview</a>
+    </div>
+    <div class="tags">
+      <span class="tag">GPS Tracking</span><span class="tag">Route Optimisation</span>
+      <span class="tag">WebSocket Updates</span><span class="tag">Django + Python</span>
+      <span class="tag">Dijkstra Algorithm</span><span class="tag">Zero Hardware Cost</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="panel-label">Live Fleet Overview</div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kv">{{ total_vehicles|default:"48" }}</div><div class="kl">Total Vehicles</div><span class="kb" style="background:rgba(255,255,255,0.06);color:rgba(240,240,240,0.4)">Fleet</span></div>
+      <div class="kpi"><div class="kv">{{ active_trips|default:"12" }}</div><div class="kl">Live Trips</div><span class="kb" style="background:rgba(74,222,128,0.1);color:#4ade80">Active</span></div>
+      <div class="kpi"><div class="kv">47</div><div class="kl">Avg km/h</div><span class="kb" style="background:rgba(255,255,255,0.06);color:rgba(240,240,240,0.4)">Normal</span></div>
+      <div class="kpi"><div class="kv">3</div><div class="kl">Active Alerts</div><span class="kb" style="background:rgba(248,113,113,0.1);color:#f87171">Attention</span></div>
+    </div>
+    <div class="map-box">
+      <div class="map-grid"></div>
+      <div class="map-dot a" style="top:28%;left:22%"></div>
+      <div class="map-dot a" style="top:52%;left:40%"></div>
+      <div class="map-dot a" style="top:18%;left:58%"></div>
+      <div class="map-dot a" style="top:64%;left:68%"></div>
+      <div class="map-dot i" style="top:38%;left:52%"></div>
+      <div class="map-dot i" style="top:74%;left:28%"></div>
+      <div class="map-dot o" style="top:44%;left:78%"></div>
+      <span class="map-lbl">Harare Metro · Live</span>
+    </div>
+    <div class="leg">
+      <div class="leg-item"><div class="leg-d" style="background:#4ade80"></div>Active</div>
+      <div class="leg-item"><div class="leg-d" style="background:#fbbf24"></div>Idle</div>
+      <div class="leg-item"><div class="leg-d" style="background:#f87171"></div>Offline</div>
+    </div>
+  </div>
+</div>
+
+<!-- OBJECTIVES: WHITE -->
+<div class="obj-band" id="objectives">
+  <div class="obj"><div class="obj-num">OBJ 01</div><span class="obj-icon"><i class="fa-solid fa-map-location-dot"></i></span><div class="obj-title">Real-Time Traffic & Route Integration</div></div>
+  <div class="obj"><div class="obj-num">OBJ 02</div><span class="obj-icon"><i class="fa-solid fa-mobile-screen"></i></span><div class="obj-title">Mobile GPS Fleet Tracking</div></div>
+  <div class="obj"><div class="obj-num">OBJ 03</div><span class="obj-icon"><i class="fa-solid fa-bolt"></i></span><div class="obj-title">Dynamic Route Optimisation</div></div>
+  <div class="obj"><div class="obj-num">OBJ 04</div><span class="obj-icon"><i class="fa-solid fa-rotate"></i></span><div class="obj-title">WebSocket Real-Time Updates</div></div>
+  <div class="obj"><div class="obj-num">OBJ 05</div><span class="obj-icon"><i class="fa-solid fa-chart-bar"></i></span><div class="obj-title">Operational Efficiency Evaluation</div></div>
+</div>
+
+<!-- FEATURES: DARK/LIGHT ALT -->
+<div id="features">
+  <div class="feat-row">
+    <div class="feat-dark"><div class="feat-label">Fleet Intelligence</div><h2 class="feat-h2">Mobile-First GPS Fleet Tracking</h2><p class="feat-body">Municipal vehicles tracked in real time via mobile GPS without dedicated hardware. Records location logs, speed, and status for every vehicle in the Harare City Council fleet.</p><ul class="feat-list"><li><i class="fa-solid fa-check"></i>Live vehicle position updates</li><li><i class="fa-solid fa-check"></i>Driver assignment & trip history</li><li><i class="fa-solid fa-check"></i>Active / Idle / Offline monitoring</li><li><i class="fa-solid fa-check"></i>Speed & utilisation analytics</li></ul></div>
+    <div class="feat-light"><div class="feat-label">Route Engine</div><h2 class="feat-h2">Dynamic Route Optimisation</h2><p class="feat-body">Dijkstra-based shortest path algorithms dynamically recalculate routes using live congestion multipliers. Traffic events trigger faster alternative routes in real time.</p><ul class="feat-list"><li><i class="fa-solid fa-check"></i>Graph-based node/edge road network</li><li><i class="fa-solid fa-check"></i>Congestion-weighted travel times</li><li><i class="fa-solid fa-check"></i>Precomputed route storage</li><li><i class="fa-solid fa-check"></i>Reduces idle time by up to 40%</li></ul></div>
+  </div>
+  <div class="feat-row">
+    <div class="feat-light"><div class="feat-label">Traffic Awareness</div><h2 class="feat-h2">Live Traffic Event Monitoring</h2><p class="feat-body">Traffic incidents are logged with GPS coordinates and severity scores. WebSocket push notifications propagate events to affected routes within seconds.</p><ul class="feat-list"><li><i class="fa-solid fa-check"></i>Low / Medium / High severity events</li><li><i class="fa-solid fa-check"></i>Geo-tagged incident reporting</li><li><i class="fa-solid fa-check"></i>Congestion multiplier propagation</li><li><i class="fa-solid fa-check"></i>Operator alert broadcasts</li></ul></div>
+    <div class="feat-dark"><div class="feat-label">System Evaluation</div><h2 class="feat-h2">Performance Metrics Dashboard</h2><p class="feat-body">Dedicated metrics module measuring average travel time, route efficiency, fleet utilisation rates, and service request response times over time.</p><ul class="feat-list"><li><i class="fa-solid fa-check"></i>Avg travel & response time tracking</li><li><i class="fa-solid fa-check"></i>Route efficiency score (0–100)</li><li><i class="fa-solid fa-check"></i>Fleet utilisation % per day</li><li><i class="fa-solid fa-check"></i>Historical trend comparison</li></ul></div>
+  </div>
+</div>
+
+<!-- RESEARCH: WHITE -->
+<div class="research-band" id="research">
+  <div class="band-label">Research Context</div>
+  <div class="band-title">Why Harare Needs This System</div>
+  <div class="cards-grid">
+    <div class="info-card"><div class="ic-icon"><i class="fa-solid fa-city"></i></div><div class="ic-title">Urban Logistics Crisis</div><div class="ic-body">Delivery vehicles spend 28–40% of their time idling in congested urban environments, generating economic losses and environmental degradation.</div><div class="ic-ref">Kai et al., 2025</div></div>
+    <div class="info-card"><div class="ic-icon"><i class="fa-solid fa-satellite-dish"></i></div><div class="ic-title">Software-First Approach</div><div class="ic-body">Wagga Wagga City Council saved $1.1M through data-driven fleet management. This system replicates that model at zero hardware cost using mobile GPS.</div><div class="ic-ref">IPWEA, 2025</div></div>
+    <div class="info-card"><div class="ic-icon"><i class="fa-solid fa-earth-africa"></i></div><div class="ic-title">African Innovation Model</div><div class="ic-body">Nairobi logistics companies achieved major efficiency gains using AI-powered route optimisation on basic smartphones — proving frugal engineering works.</div><div class="ic-ref">BusinessDay Nigeria, 2025</div></div>
+    <div class="info-card"><div class="ic-icon"><i class="fa-solid fa-landmark"></i></div><div class="ic-title">Ward 14 Case Study</div><div class="ic-body">Kambuzuma residents face absent refuse collection and failed water infrastructure — symptoms of broken logistics governance this system directly targets.</div><div class="ic-ref">Mutandiro, 2025</div></div>
+    <div class="info-card"><div class="ic-icon"><i class="fa-solid fa-link"></i></div><div class="ic-title">Digital Twin Precedent</div><div class="ic-body">Chattanooga's multi-domain urban mobility platform demonstrates software-centric traffic management replicable in resource-constrained municipalities.</div><div class="ic-ref">Xu et al., 2023</div></div>
+    <div class="info-card"><div class="ic-icon"><i class="fa-solid fa-arrow-trend-up"></i></div><div class="ic-title">Scalable to Zimbabwe</div><div class="ic-body">Designed for Zimbabwean municipalities with variable internet connectivity. Core tracking, routing, and alerting functions operate with intermittent data.</div><div class="ic-ref">Razemba, 2026</div></div>
+  </div>
+</div>
+
+<!-- TECH STATS: DARK -->
+<div class="tech-band" id="tech">
+  <div style="font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);text-align:center;margin-bottom:6px">System Capabilities</div>
+  <div style="font-size:22px;font-weight:700;text-align:center;color:#fff;margin-bottom:32px;letter-spacing:-0.3px">Built for Scale</div>
+  <div class="tech-grid">
+    <div class="tech-card"><div class="tech-val">48+</div><div class="tech-lbl">Fleet Vehicles</div></div>
+    <div class="tech-card"><div class="tech-val">&lt;5s</div><div class="tech-lbl">Update Interval</div></div>
+    <div class="tech-card"><div class="tech-val">40%</div><div class="tech-lbl">Idle Time Reduction</div></div>
+    <div class="tech-card"><div class="tech-val">24/7</div><div class="tech-lbl">System Coverage</div></div>
+  </div>
+</div>
+
+<!-- CTA: WHITE -->
+<div class="cta-band">
+  <div class="cta-title">Ready to launch the dashboard?</div>
+  <div class="cta-sub">Sign in to access real-time fleet tracking, route optimisation, and performance metrics.</div>
+  <div class="cta-btns">
+    <a href="/login/" class="btn-cta-dark"><i class="fa-solid fa-gauge-high fa-xs"></i> Launch Dashboard</a>
+    <a href="#research" class="btn-cta-outline"><i class="fa-solid fa-book-open fa-xs"></i> Read Research</a>
+  </div>
+</div>
+
+<footer>
+  <div class="f-brand">Smart Transport System · Harare City Council</div>
+  <div class="f-right">© 2026 · Allons Tafadzwa Mazani · Research Prototype</div>
+</footer>
+
+<script>
+const pc=document.getElementById('pcanvas'),ctx=pc.getContext('2d');let W,H,pts=[];
+function resize(){W=pc.width=window.innerWidth;H=pc.height=window.innerHeight}resize();window.addEventListener('resize',()=>{resize();init()});
+function init(){pts=[];const n=Math.floor(W*H/16000);for(let i=0;i<n;i++){pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.4+0.4})}}init();
+function draw(){ctx.clearRect(0,0,W,H);pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fill()});pts.forEach((a,i)=>{pts.slice(i+1).forEach(b=>{const d=Math.hypot(a.x-b.x,a.y-b.y);if(d<110){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle=`rgba(255,255,255,${0.07*(1-d/110)})`;ctx.lineWidth=.5;ctx.stroke()}})});requestAnimationFrame(draw)}draw();
+</script>
+</body>
+</html>

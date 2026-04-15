@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Live Map | Smart Transport{% endblock %}
+{% block nav_map %}active{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<style>
+/* Make map fill the full main area */
+.main-scroll{padding:0 !important;overflow:hidden !important}
+#full-map{position:fixed;top:0;left:252px;right:0;bottom:0;z-index:5}
+/* Panels float over map */
+.map-panel{position:fixed;z-index:20;background:rgba(9,9,9,0.88);backdrop-filter:blur(14px);border:1px solid var(--border-dark);border-radius:12px}
+.ctrl-panel{top:18px;left:270px;width:256px;padding:16px}
+.info-panel{top:18px;right:14px;width:280px;padding:16px;max-height:calc(100vh - 36px);overflow-y:auto}
+.layer-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 11px;border-radius:7px;background:rgba(255,255,255,0.04);border:1px solid var(--border-dark);color:var(--text-on-dark-dim);font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;margin-bottom:6px;text-align:left}
+.layer-btn.on{background:rgba(74,222,128,0.08);border-color:rgba(74,222,128,0.2);color:var(--green-light)}
+.layer-btn:hover{border-color:var(--border-dark2);color:var(--text-on-dark)}
+.map-stat{background:rgba(255,255,255,0.04);border:1px solid var(--border-dark);border-radius:8px;padding:10px;text-align:center;flex:1}
+.ms-val{font-size:1.3rem;font-weight:700;color:#fff;font-variant-numeric:tabular-nums}
+.ms-lbl{font-size:9px;color:var(--text-on-dark-dim);text-transform:uppercase;letter-spacing:1px;margin-top:3px}
+.leg-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--text-on-dark-dim);margin-bottom:7px}
+.leg-circle{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.leg-line{width:20px;height:2px;flex-shrink:0}
+.v-card{background:rgba(255,255,255,0.04);border:1px solid var(--border-dark);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;transition:border-color .18s}
+.v-card:hover{border-color:var(--border-dark2)}
+.v-card-reg{font-family:'Courier New',monospace;font-size:11px;font-weight:700;color:#fff}
+.v-card-sub{font-size:10px;color:var(--text-on-dark-dim);margin-top:2px}
+.pulse-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green-light);animation:pulse-anim 1.5s ease-in-out infinite;margin-right:5px}
+@keyframes pulse-anim{0%,100%{opacity:1}50%{opacity:0.3}}
+.panel-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-on-dark-muted);margin-bottom:10px}
+.filter-row{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.f-pill{font-size:10px;padding:3px 9px;border-radius:99px;border:1px solid var(--border-dark);background:transparent;color:var(--text-on-dark-dim);cursor:pointer;transition:all .16s}
+.f-pill.on{background:rgba(255,255,255,0.08);border-color:var(--border-dark2);color:#fff}
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="full-map"></div>
+
+<!-- LEFT CONTROL PANEL -->
+<div class="map-panel ctrl-panel">
+  <div class="panel-label"><i class="fa-solid fa-layers"></i> &nbsp;Layers</div>
+  <button class="layer-btn on" id="lyr-vehicles" onclick="toggleLayer('vehicles',this)"><i class="fa-solid fa-truck fa-xs"></i> Vehicles</button>
+  <button class="layer-btn on" id="lyr-traffic" onclick="toggleLayer('traffic',this)"><i class="fa-solid fa-triangle-exclamation fa-xs"></i> Traffic Events</button>
+  <button class="layer-btn on" id="lyr-routes" onclick="toggleLayer('routes',this)"><i class="fa-solid fa-route fa-xs"></i> Active Routes</button>
+  <button class="layer-btn" id="lyr-heatmap" onclick="toggleLayer('heatmap',this)"><i class="fa-solid fa-fire fa-xs"></i> Heatmap</button>
+
+  <hr style="border:none;border-top:1px solid var(--border-dark);margin:12px 0">
+
+  <div class="panel-label">Stats</div>
+  <div style="display:flex;gap:7px;margin-bottom:10px">
+    <div class="map-stat"><div class="ms-val" id="st-total">{{ total_vehicles|default:"0" }}</div><div class="ms-lbl">Total</div></div>
+    <div class="map-stat"><div class="ms-val" id="st-active">{{ active_count|default:"0" }}</div><div class="ms-lbl">Active</div></div>
+    <div class="map-stat"><div class="ms-val" id="st-events">{{ traffic_count|default:"0" }}</div><div class="ms-lbl">Events</div></div>
+  </div>
+
+  <div class="panel-label">Legend</div>
+  <div class="leg-row"><div class="leg-circle" style="background:var(--green-light)"></div>Active vehicle</div>
+  <div class="leg-row"><div class="leg-circle" style="background:var(--amber-light)"></div>Idle vehicle</div>
+  <div class="leg-row"><div class="leg-circle" style="background:var(--red-light)"></div>Offline vehicle</div>
+  <div class="leg-row"><div class="leg-circle" style="background:rgba(248,113,113,0.4);border:2px solid var(--red-light)"></div>Traffic event</div>
+  <div class="leg-row"><div class="leg-line" style="background:rgba(59,130,246,0.4)"></div>Active route</div>
+
+  <hr style="border:none;border-top:1px solid var(--border-dark);margin:12px 0">
+  <div style="display:flex;gap:6px">
+    <button onclick="refreshMap()" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border-dark);color:var(--text-on-dark-dim);padding:7px;border-radius:7px;cursor:pointer;font-size:11px;transition:all .18s" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='var(--border-dark)'"><i class="fa-solid fa-rotate-right fa-xs"></i> Refresh</button>
+    <button onclick="centerMap()" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border-dark);color:var(--text-on-dark-dim);padding:7px;border-radius:7px;cursor:pointer;font-size:11px;transition:all .18s" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)'" onmouseout="this.style.borderColor='var(--border-dark)'"><i class="fa-solid fa-location-dot fa-xs"></i> Centre</button>
+  </div>
+</div>
+
+<!-- RIGHT INFO PANEL -->
+<div class="map-panel info-panel">
+  <div class="panel-label"><span class="pulse-dot"></span>Live Vehicles ({{ vehicles|length }})</div>
+  <div class="filter-row">
+    <button class="f-pill on" onclick="filterVCards(this,'all')">All</button>
+    <button class="f-pill" onclick="filterVCards(this,'active')">Active</button>
+    <button class="f-pill" onclick="filterVCards(this,'idle')">Idle</button>
+    <button class="f-pill" onclick="filterVCards(this,'offline')">Offline</button>
+  </div>
+  <div id="vehicle-cards">
+    {% for v in vehicles %}
+    {% if v.current_latitude and v.current_longitude %}
+    <div class="v-card" data-status="{{ v.status }}" onclick="flyTo({{ v.current_latitude }},{{ v.current_longitude }})">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="v-card-reg">{{ v.registration_number }}</div>
+        <span class="badge badge-{% if v.status == 'active' %}green{% elif v.status == 'idle' %}amber{% else %}red{% endif %}">{{ v.status }}</span>
+      </div>
+      <div class="v-card-sub"><i class="fa-solid fa-user fa-xs"></i> {{ v.driver_name }} &nbsp;·&nbsp; <i class="fa-solid fa-gauge fa-xs"></i> {{ v.speed|floatformat:0 }} km/h</div>
+    </div>
+    {% endif %}
+    {% empty %}
+    <div style="color:var(--text-on-dark-dim);font-size:11px">No vehicles with GPS data.</div>
+    {% endfor %}
+  </div>
+
+  {% if traffic_events %}
+  <hr style="border:none;border-top:1px solid var(--border-dark);margin:12px 0">
+  <div class="panel-label"><i class="fa-solid fa-triangle-exclamation fa-xs"></i> &nbsp;Active Incidents ({{ traffic_events|length }})</div>
+  {% for event in traffic_events|slice:":5" %}
+  <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border-dark);border-radius:8px;padding:9px;margin-bottom:7px">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+      <span class="badge badge-{% if event.severity == 'high' %}red{% elif event.severity == 'medium' %}amber{% else %}green{% endif %}">{{ event.severity }}</span>
+      <span style="font-size:10px;color:var(--text-on-dark-dim)">{{ event.timestamp|timesince }} ago</span>
+    </div>
+    <div style="font-size:11px;color:var(--text-on-dark)">{{ event.description|default:"Traffic incident"|truncatechars:55 }}</div>
+  </div>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+var lmap = L.map('full-map',{zoomControl:false}).setView([-17.8252,31.0335],13);
+L.control.zoom({position:'bottomright'}).addTo(lmap);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'© CartoDB',maxZoom:19}).addTo(lmap);
+
+var layers = {
+  vehicles:L.layerGroup().addTo(lmap),
+  traffic:L.layerGroup().addTo(lmap),
+  routes:L.layerGroup().addTo(lmap),
+  heatmap:null
+};
+var layerState = {vehicles:true,traffic:true,routes:true,heatmap:false};
+
+// Store vehicle positions for route drawing
+var vehiclePositions = {};
+
+// Add vehicle markers
+{% for v in vehicles %}{% if v.current_latitude and v.current_longitude %}
+var clr{{ forloop.counter }} = "{% if v.status == 'active' %}#4ade80{% elif v.status == 'idle' %}#fbbf24{% else %}#f87171{% endif %}";
+var mkr{{ forloop.counter }} = L.circleMarker([{{ v.current_latitude }},{{ v.current_longitude }}],{
+  radius:{% if v.status == 'active' %}9{% else %}7{% endif %},
+  fillColor:clr{{ forloop.counter }},
+  color:'#090909',
+  weight:2,
+  fillOpacity:.92
+});
+mkr{{ forloop.counter }}.bindPopup(`<div style="font-family:monospace;font-size:12px;background:#111;color:#f0f0f0;padding:10px;border-radius:8px;min-width:160px;border:1px solid rgba(255,255,255,0.1)"><b style="color:#fff;display:block;margin-bottom:6px">{{ v.registration_number }}</b><span style="color:rgba(240,240,240,0.6)">Driver:</span> {{ v.driver_name }}<br><span style="color:rgba(240,240,240,0.6)">Status:</span> <span style="color:${clr{{ forloop.counter }}}">{{ v.status }}</span><br><span style="color:rgba(240,240,240,0.6)">Speed:</span> {{ v.speed|floatformat:0 }} km/h<br><span style="color:rgba(240,240,240,0.6)">Updated:</span> {{ v.last_updated|timesince }} ago</div>`);
+layers.vehicles.addLayer(mkr{{ forloop.counter }});
+vehiclePositions['{{ v.id }}'] = {lat:{{ v.current_latitude }}, lng:{{ v.current_longitude }}, status:'{{ v.status }}'};
+{% endif %}{% endfor %}
+
+// Add traffic event circles
+{% for event in traffic_events %}
+var eClr{{ forloop.counter }} = "{% if event.severity == 'high' %}#f87171{% elif event.severity == 'medium' %}#fbbf24{% else %}#4ade80{% endif %}";
+var circle{{ forloop.counter }} = L.circle([{{ event.latitude }},{{ event.longitude }}],{
+  radius:280,
+  color:eClr{{ forloop.counter }},
+  fillColor:eClr{{ forloop.counter }},
+  fillOpacity:.18,
+  weight:1.5
+});
+circle{{ forloop.counter }}.bindPopup(`<div style="font-family:monospace;font-size:11px;background:#111;color:#f0f0f0;padding:9px;border-radius:7px;min-width:150px;border:1px solid rgba(255,255,255,0.1)"><b style="color:${eClr{{ forloop.counter }}}">{{ event.severity|upper }}</b><br>{{ event.description|default:"Traffic event"|truncatechars:50 }}<br><span style="color:rgba(240,240,240,0.5)">{{ event.timestamp|timesince }} ago</span></div>`);
+layers.traffic.addLayer(circle{{ forloop.counter }});
+{% endfor %}
+
+// Draw routes connecting active vehicles to destinations
+{% for trip in ongoing_trips %}
+{% if trip.vehicle.current_latitude and trip.vehicle.current_longitude %}
+var routeLine{{ forloop.counter }} = L.polyline([
+  [{{ trip.vehicle.current_latitude }}, {{ trip.vehicle.current_longitude }}],
+  [{{ trip.dest_lat }}, {{ trip.dest_lng }}]
+], {
+  color: 'rgba(59,130,246,0.5)',
+  weight: 2,
+  dashArray: '5, 10',
+  opacity: 0.7
+});
+routeLine{{ forloop.counter }}.bindPopup(`<div style="font-family:monospace;font-size:11px;background:#111;color:#f0f0f0;padding:9px;border-radius:7px;min-width:150px;border:1px solid rgba(255,255,255,0.1)"><b style="color:#3b82f6">{{ trip.vehicle.registration_number }}</b><br><span style="color:rgba(240,240,240,0.6)">From:</span> {{ trip.start_location }}<br><span style="color:rgba(240,240,240,0.6)">To:</span> {{ trip.destination }}<br><span style="color:rgba(240,240,240,0.6)">Status:</span> <span style="color:#4ade80">{{ trip.status }}</span></div>`);
+
+// Add destination marker
+var destMarker{{ forloop.counter }} = L.marker([{{ trip.dest_lat }}, {{ trip.dest_lng }}], {
+  icon: L.divIcon({
+    className: 'custom-dest-icon',
+    html: '<div style="background:#3b82f6;width:12px;height:12px;border-radius:50%;border:2px solid #090909"></div>',
+    iconSize: [12, 12]
+  })
+});
+destMarker{{ forloop.counter }}.bindPopup(`<div style="font-family:monospace;font-size:11px;background:#111;color:#f0f0f0;padding:9px;border-radius:7px;min-width:120px;border:1px solid rgba(255,255,255,0.1)"><b style="color:#3b82f6">Destination</b><br>{{ trip.destination }}</div>`);
+
+layers.routes.addLayer(routeLine{{ forloop.counter }});
+layers.routes.addLayer(destMarker{{ forloop.counter }});
+{% endif %}
+{% endfor %}
+
+function toggleLayer(name,btn){
+  layerState[name]=!layerState[name];
+  btn.classList.toggle('on',layerState[name]);
+  if(layerState[name]){if(layers[name])lmap.addLayer(layers[name])}
+  else{if(layers[name])lmap.removeLayer(layers[name])}
+}
+function centerMap(){lmap.setView([-17.8252,31.0335],13)}
+function flyTo(lat,lng){lmap.flyTo([lat,lng],16)}
+function refreshMap(){window.location.reload()}
+function filterVCards(btn,status){
+  document.querySelectorAll('.f-pill').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.querySelectorAll('.v-card').forEach(c=>{c.style.display=(status==='all'||c.dataset.status===status)?'':'none'});
+}
+setTimeout(()=>lmap.invalidateSize(),300);
+
+// Auto-refresh stats every 10s
+setInterval(()=>fetch('/api/vehicles/').then(r=>r.json()).then(d=>{
+  document.getElementById('st-total').textContent=d.vehicles.length;
+  document.getElementById('st-active').textContent=d.vehicles.filter(v=>v.status==='active').length;
+}).catch(()=>{}),10000);
+</script>
+{% endblock %}

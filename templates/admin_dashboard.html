@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | Smart Transport{% endblock %}
+{% block nav_admin %}active{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div><div class="page-title">Admin Dashboard</div><div class="page-sub">System overview — staff access only</div></div>
+  <div class="topbar-right">
+    <a href="/admin/" class="btn btn-outline-dark btn-sm"><i class="fa-solid fa-screwdriver-wrench"></i> Django Admin</a>
+    <a href="{% url 'site_logs' %}" class="btn btn-outline-dark btn-sm"><i class="fa-solid fa-scroll"></i> Logs</a>
+  </div>
+</div>
+<!-- DARK: KPIs -->
+<div class="kpi-grid kpi-grid-4 gap-mb">
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:#fff"></div><i class="kpi-icon fa-solid fa-truck"></i><div class="kpi-val">{{ total_vehicles|default:0 }}</div><div class="kpi-label">Total Vehicles</div></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--green-light)"></div><i class="kpi-icon fa-solid fa-route"></i><div class="kpi-val" style="color:var(--green-light)">{{ active_trips|default:0 }}</div><div class="kpi-label">Active Trips</div><span class="kpi-delta delta-up">Live</span></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--blue-light)"></div><i class="kpi-icon fa-solid fa-users"></i><div class="kpi-val" style="color:var(--blue-light)">{{ total_users|default:0 }}</div><div class="kpi-label">System Users</div></div>
+  <div class="kpi kpi-dark"><div class="kpi-stripe" style="background:var(--red-light)"></div><i class="kpi-icon fa-solid fa-bell"></i><div class="kpi-val" style="color:var(--red-light)">{{ alert_count|default:0 }}</div><div class="kpi-label">Active Alerts</div></div>
+</div>
+<!-- WHITE: BREAKDOWN CARDS -->
+<div class="section-white gap-mb">
+  <div class="grid-3">
+    <div class="card-white">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-truck"></i> &nbsp;Fleet Status</span></div>
+      <div class="card-body">
+        {% for label,count,color in fleet_status_rows %}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:12px;color:var(--text-on-light-dim)">{{ label }}</span>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="width:72px;height:4px;background:rgba(0,0,0,0.08);border-radius:2px"><div style="height:100%;border-radius:2px;background:{{ color }};width:{% widthratio count total_vehicles 100 %}%"></div></div>
+            <span style="font-size:13px;font-weight:700;color:var(--text-on-light);min-width:18px;text-align:right">{{ count }}</span>
+          </div>
+        </div>
+        {% empty %}
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:12px;color:var(--text-on-light-dim)">Active</span><span style="font-weight:700;color:var(--green)">{{ active_count|default:0 }}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:12px;color:var(--text-on-light-dim)">Idle</span><span style="font-weight:700;color:var(--amber)">{{ idle_count|default:0 }}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-on-light-dim)">Offline</span><span style="font-weight:700;color:var(--red)">{{ offline_count|default:0 }}</span></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card-white">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-triangle-exclamation"></i> &nbsp;Traffic Severity</span></div>
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:12px;color:var(--text-on-light-dim)">High</span><span style="font-weight:700;color:var(--red)">{{ traffic_high|default:0 }}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:12px;color:var(--text-on-light-dim)">Medium</span><span style="font-weight:700;color:var(--amber)">{{ traffic_medium|default:0 }}</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="font-size:12px;color:var(--text-on-light-dim)">Low</span><span style="font-weight:700;color:var(--green)">{{ traffic_low|default:0 }}</span></div>
+      </div>
+    </div>
+    <div class="card-white">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-link"></i> &nbsp;Quick Links</span></div>
+      <div class="card-body" style="display:flex;flex-direction:column;gap:7px">
+        <a href="{% url 'fleet_list' %}" class="btn btn-outline-light btn-sm" style="justify-content:flex-start"><i class="fa-solid fa-truck"></i> Fleet Management</a>
+        <a href="{% url 'trip_list' %}" class="btn btn-outline-light btn-sm" style="justify-content:flex-start"><i class="fa-solid fa-route"></i> Trip Management</a>
+        <a href="{% url 'map_view' %}" class="btn btn-outline-light btn-sm" style="justify-content:flex-start"><i class="fa-solid fa-map-location-dot"></i> Live Map</a>
+        <a href="{% url 'analytics_view' %}" class="btn btn-outline-light btn-sm" style="justify-content:flex-start"><i class="fa-solid fa-chart-bar"></i> Analytics</a>
+        <a href="/admin/" class="btn btn-outline-light btn-sm" style="justify-content:flex-start"><i class="fa-solid fa-screwdriver-wrench"></i> Django Admin</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- DARK: RECENT ALERTS + LOGS -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-bell"></i> &nbsp;Recent Alerts</span><a href="{% url 'alert_list' %}" style="font-size:10px;color:rgba(255,255,255,0.35);text-decoration:none">All <i class="fa-solid fa-arrow-right fa-xs"></i></a></div>
+    <div class="card-body" style="padding:0 16px">
+      {% for alert in recent_alerts %}
+      <div style="display:flex;gap:9px;align-items:flex-start;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div style="width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px;background:{% if alert.alert_type == 'traffic' %}var(--red-light){% elif alert.alert_type == 'vehicle' %}var(--amber-light){% else %}var(--blue-light){% endif %}"></div>
+        <div><div style="font-size:11px;color:var(--text-on-dark)">{{ alert.message|truncatechars:66 }}</div><div style="font-size:9px;color:var(--text-on-dark-muted);margin-top:2px">{{ alert.created_at|timesince }} ago</div></div>
+      </div>
+      {% empty %}<div style="color:var(--text-on-dark-dim);font-size:11px;padding:12px 0">No recent alerts.</div>{% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><span class="card-title"><i class="fa-solid fa-scroll"></i> &nbsp;Recent Site Visits</span><a href="{% url 'site_logs' %}" style="font-size:10px;color:rgba(255,255,255,0.35);text-decoration:none">All <i class="fa-solid fa-arrow-right fa-xs"></i></a></div>
+    <div class="card-body" style="padding:0 16px">
+      {% for log in recent_logs %}
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+        <div><div style="font-size:11px;color:var(--text-on-dark);font-family:'Courier New',monospace">{{ log.path }}</div><div style="font-size:9px;color:var(--text-on-dark-muted);margin-top:2px">{{ log.user|default:"Anonymous" }} · {{ log.method }}</div></div>
+        <div style="font-size:9px;color:var(--text-on-dark-dim)">{{ log.timestamp|timesince }} ago</div>
+      </div>
+      {% empty %}<div style="color:var(--text-on-dark-dim);font-size:11px;padding:12px 0">No logs.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
